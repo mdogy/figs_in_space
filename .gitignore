@@ -1,0 +1,8 @@
+node_modules
+.DS_Store
+dist
+.vscode
+.vite
+coverage
+npm-debug.log*
+*.tsbuildinfo
