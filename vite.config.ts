@@ -2,6 +2,7 @@ import { defineConfig } from 'vitest/config'
 import { resolve } from 'path'
 
 export default defineConfig({
+  cacheDir: './.vite-cache',
   resolve: {
     alias: {
       '@core': resolve(__dirname, './src/core'),
@@ -20,6 +21,9 @@ export default defineConfig({
     outDir: 'dist',
     assetsDir: 'assets',
     sourcemap: true
+  },
+  optimizeDeps: {
+    force: true
   },
   test: {
     globals: true,
