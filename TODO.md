@@ -27,3 +27,7 @@
 - [ ] Add tests for demo overlay allowing gameplay updates
 - [ ] Add tests covering laser fire after spacebar press
 - [ ] Add tests for explosion/respawn sequence and GAME OVER delay
+- [ ] Add tests for fig collisions with player lasers (split/destroy)
+- [ ] Document known WSL/Dropbox cache constraints for Vite dev server
+- [ ] Build headless/effect-level regression harness for demo attract mode, player laser vs fig collisions, and multi-life death flow (must fail before fixes)
+- [ ] Block fixes until above effect-based tests reproduce user-visible bugs

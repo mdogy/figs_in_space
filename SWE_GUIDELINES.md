@@ -26,11 +26,13 @@
 ### 2.1. Coverage Requirements
 - **Unit Tests:** Maintain **80% or higher** code coverage.
 - **Acceptance Tests:** Every requirement listed in `GAME_REQUIREMENTS.md` must be anchored by an automated acceptance test that demonstrates the feature is correctly implemented.
+- **Effect-First Repro:** For every reported bug, add a failing, effect-level test that reproduces the user-visible symptom *before* investigating or applying a fix. If the effect cannot be reproduced with current seams/mocks, first refactor to enable headless detection of the effect, then add the test.
+- **No Fix Without Failing Test:** Do not attempt a fix until the effect-based test is red. A bug is only considered fixed when the effect-focused test turns green (not just when the suspected cause is patched).
 
 ### 2.2. Bug Fixing Workflow (TDD for Bugs)
 - When a bug is identified:
-    1.  **Reproduce:** Write a failing test case that reproduces the bug (Red).
-    2.  **Fix:** Implement the fix until the test passes (Green).
+    1.  **Reproduce (Effect-Level):** Write a failing test that captures the observed effect (what the user sees), not the suspected cause. If impossible, refactor to make it observable.
+    2.  **Fix:** Implement the fix until the effect-focused test passes (Green).
     3.  **Refactor:** Clean up the code while ensuring tests still pass.
 - Do not fix a bug without first creating a reproduction test.
 
