@@ -12,7 +12,7 @@ export default defineConfig({
       '@prefabs': resolve(__dirname, './src/prefabs'),
       '@theme': resolve(__dirname, './src/theme'),
       '@ui': resolve(__dirname, './src/ui'),
-      phaser3spectorjs: resolve(__dirname, './tests/mocks/phaser3spectorjs.js')
+      phaser3spectorjs: resolve(__dirname, './tests/mocks/phaser3spectorjs.ts')
     }
   },
   server: {

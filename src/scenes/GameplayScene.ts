@@ -18,6 +18,7 @@ const MAX_PLAYER_SPEED = 0.35;
 const INITIAL_LIVES = 10;
 const RESPAWN_DELAY_MS = 750;
 const INVULNERABLE_MS = 2000;
+const GAME_OVER_DELAY_MS = 1000;
 const LASER_BASE_LIFESPAN_MS = 600;
 const LASER_LIFESPAN_STEP_MS = 300;
 const BASE_FIG_COUNT = 5;
@@ -242,11 +243,6 @@ export class GameplayScene extends Phaser.Scene {
       return;
     }
 
-    // If already shooting (key held down), don't shoot again
-    if (this.isShooting) {
-      return;
-    }
-
     // Check cooldown
     if (time - this.lastShotAt < SHOT_COOLDOWN_MS) {
       return;
@@ -430,7 +426,8 @@ export class GameplayScene extends Phaser.Scene {
     this.invulnerableUntil = respawnTime + INVULNERABLE_MS;
 
     if (this.lives <= 0) {
-      this.endGame();
+      this.isGameOver = true;
+      this.time.delayedCall(GAME_OVER_DELAY_MS, () => this.endGame());
       return;
     }
 

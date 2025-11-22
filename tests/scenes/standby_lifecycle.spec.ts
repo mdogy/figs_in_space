@@ -9,6 +9,7 @@ const mockScene = {
     launch: vi.fn(),
     bringToTop: vi.fn(),
     isActive: vi.fn(() => false),
+    wake: vi.fn(),
     get: vi.fn(() => ({
         children: { list: [] },
         events: { once: vi.fn() }

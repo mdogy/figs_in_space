@@ -65,9 +65,11 @@ vi.mock('../../src/scenes/GameplayScene', async () => {
 
 describe('GameplayScene Lifecycle', () => {
     let scene: GameplayScene;
+    let delayedCallbacks: Function[];
 
     beforeEach(() => {
         scene = new GameplayScene();
+        delayedCallbacks = [];
         
         // Inject mocks
         (scene as any).scene = mockScene;
@@ -86,7 +88,7 @@ describe('GameplayScene Lifecycle', () => {
         (scene as any).time = {
             now: 0,
             delayedCall: vi.fn((delay, callback) => {
-                callback();
+                delayedCallbacks.push(callback);
                 return { remove: vi.fn() };
             })
         };
@@ -136,6 +138,8 @@ describe('GameplayScene Lifecycle', () => {
         // Hit 1 at t=1000
         (scene as any).handlePlayerHit(1000);
         expect((scene as any).lives).toBe(9);
+        // Respawn
+        delayedCallbacks.shift()?.();
         
         // Hit 2 at t=1000 (same frame/time)
         (scene as any).handlePlayerHit(1000);
@@ -159,9 +163,16 @@ describe('GameplayScene Lifecycle', () => {
         for (let i = 0; i < 10; i++) {
             expect((scene as any).isGameOver).toBe(false);
             (scene as any).handlePlayerHit(time);
+            // Simulate respawn between hits while lives remain
+            if (delayedCallbacks.length) {
+                delayedCallbacks.shift()?.();
+            }
             time += 5000; // Advance time past invulnerability
         }
-        
+
+        // Trigger delayed GAME OVER callback
+        delayedCallbacks.forEach((cb) => cb());
+
         expect((scene as any).lives).toBe(0);
         expect((scene as any).isGameOver).toBe(true);
         expect(mockScene.start).toHaveBeenCalledWith('GameOverScene', expect.anything());

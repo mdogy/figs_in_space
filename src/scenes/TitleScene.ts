@@ -148,9 +148,11 @@ export class TitleScene extends Phaser.Scene {
 
     // Launch Game in Demo Mode
     if (this.scene.isActive('GameplayScene')) {
-        this.scene.stop('GameplayScene');
+      this.scene.stop('GameplayScene');
     }
     this.scene.launch('GameplayScene', { demo: true });
+    this.scene.wake('GameplayScene');
+    this.scene.bringToTop('GameplayScene');
     
     // Show Demo UI
     this.startBlinkingInsertCoin();

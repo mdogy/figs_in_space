@@ -20,3 +20,10 @@
 - [x] Add tests for laser lifespan/range scaling every 3 levels
 - [x] Add tests confirming leaderboard name entry accepts 20 characters and saves fallback names
 - [x] Add acceptance test covering fig speed/count plateau after Level 9
+- [ ] Fix demo attract mode to keep gameplay running under blinking "INSERT COIN"
+- [ ] Fix laser firing input so PlayerShip shoots on spacebar (regression)
+- [ ] Fix player death flow: explosion + respawn for remaining lives; delay before GAME OVER
+- [ ] Implement yo-yo favicon asset per requirements and wire into index.html
+- [ ] Add tests for demo overlay allowing gameplay updates
+- [ ] Add tests covering laser fire after spacebar press
+- [ ] Add tests for explosion/respawn sequence and GAME OVER delay

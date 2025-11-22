@@ -22,7 +22,7 @@ Automated attract mode that cycles through three sub-states every 10 seconds. No
 1.  **Standby.Demo:**
     - AI controls the ship.
     - "INSERT COIN" text blinks over the gameplay.
-    - Aggressive AI behavior.
+    - Aggressive AI behavior runs underneath the overlay (demo keeps playing).
     - Starts at a random level and score (score not recorded).
 2.  **Standby.HighScore:**
     - Displays the top 10 high scores.
@@ -41,6 +41,7 @@ Automated attract mode that cycles through three sub-states every 10 seconds. No
 - **Invulnerability:**
   - After losing a life, the ship is invincible for 2 seconds.
   - Minimum gameplay duration is ~20 seconds (10 lives * 2s invulnerability).
+  - Player explosion plays before respawn; remaining lives continue until all are lost.
 
 ### Level Progression
 - **Level 1:** Start with large figs.

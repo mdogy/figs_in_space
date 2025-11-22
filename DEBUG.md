@@ -119,6 +119,10 @@ gameDebug.setEnabled(true);
 gameDebug.downloadHistory();
 ```
 
+## Environment Notes (WSL/Dropbox)
+
+- Vite cache is redirected to the OS temp directory in `vite.config.ts` to avoid permission errors when running on WSL with a Dropbox-backed filesystem. If you see "Outdated Optimize Dep" or EACCES on `.vite-cache`, clear the temp cache (`rm -rf /tmp/figs-in-space-vite-cache*`) and restart `npm run dev`.
+
 ### Test Laser Firing
 
 ```javascript
