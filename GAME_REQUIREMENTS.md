@@ -79,11 +79,13 @@ Automated attract mode that cycles through three sub-states every 10 seconds. No
   - Impact of a laser bolts destroys a smallest fig
   - Impact of a laser bolt causes the enemy ship to explode
   - Impact of a laser bolt has no effect on black holes
-  - Range of laser bolts increases every three levels by boosting lifespan until the bolt can cross the screen; no further increases past that point.
+ - Range of laser bolts increases every three levels by boosting lifespan until the bolt can cross the screen; no further increases past that point.
 - **Collisions:**
   - Ship vs. Hazard -> Lose 1 Life.
   - Figs vs. Figs -> Break into smaller figs.
   - Black Hole -> Consumes everything.
+- **UI:**
+  - Use the yo-yo emoji (🪀) as the site favicon.
 
 ---
 
