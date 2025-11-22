@@ -10,7 +10,7 @@ export class TitleScene extends Phaser.Scene {
   private titleTween?: Phaser.Tweens.Tween;
   private blinkTimer?: Phaser.Time.TimerEvent;
   private attractTimer?: Phaser.Time.TimerEvent;
-  private attractStep: Array<'demo' | 'leaderboard'> = ['demo', 'leaderboard'];
+  private attractStep: Array<'title' | 'demo' | 'leaderboard'> = ['title', 'demo', 'leaderboard'];
   private attractIndex = 0;
 
   constructor() {
@@ -18,18 +18,23 @@ export class TitleScene extends Phaser.Scene {
   }
 
   create(): void {
-    this.launchDemoScene();
     this.drawInsertCoin();
     this.drawTitleCard();
-    this.startBlinkingInsertCoin();
+    
+    // Start in the first state (Title)
+    this.showTitle();
     this.scheduleAttractCycle();
 
-    this.input.keyboard.on('keydown', this.startRealGame, this);
+    if (this.input.keyboard) {
+        this.input.keyboard.on('keydown', this.startRealGame, this);
+    }
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.attractTimer?.remove();
       this.blinkTimer?.remove();
-      this.input.keyboard.off('keydown', this.startRealGame, this);
+      if (this.input.keyboard) {
+          this.input.keyboard.off('keydown', this.startRealGame, this);
+      }
     });
   }
 
@@ -42,16 +47,19 @@ export class TitleScene extends Phaser.Scene {
         color: '#FFFFFF',
         fontStyle: 'bold'
       })
-      .setOrigin(0.5);
+      .setOrigin(0.5)
+      .setVisible(false);
   }
 
   private drawTitleCard(): void {
     const { width, height } = this.scale;
     this.titleText = this.add
-      .text(width / 2, height * 0.8, 'Figs in Space', {
-        fontSize: '64px',
+      .text(width / 2, height * 0.5, 'Figs in Space', {
+        fontSize: '80px',
         color: '#FFFFFF',
-        fontStyle: 'bold'
+        fontStyle: 'bold',
+        stroke: '#000',
+        strokeThickness: 6
       })
       .setOrigin(0.5)
       .setDepth(50)
@@ -59,9 +67,9 @@ export class TitleScene extends Phaser.Scene {
 
     this.titleTween = this.tweens.add({
       targets: this.titleText,
-      scale: { from: 0.7, to: 1.1 },
-      alpha: { from: 0.4, to: 1 },
-      duration: 1200,
+      scale: { from: 0.9, to: 1.1 },
+      angle: { from: -2, to: 2 },
+      duration: 2000,
       yoyo: true,
       repeat: -1,
       ease: 'Sine.easeInOut',
@@ -71,6 +79,7 @@ export class TitleScene extends Phaser.Scene {
 
   private startBlinkingInsertCoin(): void {
     this.blinkTimer?.remove();
+    this.insertCoinText?.setVisible(true);
     this.insertCoinText?.setAlpha(1);
     this.blinkTimer = this.time.addEvent({
       delay: INSERT_COIN_BLINK_MS,
@@ -85,6 +94,7 @@ export class TitleScene extends Phaser.Scene {
   private stopBlinkingInsertCoin(): void {
     this.blinkTimer?.remove();
     this.blinkTimer = undefined;
+    this.insertCoinText?.setVisible(false);
     this.insertCoinText?.setAlpha(1);
   }
 
@@ -96,46 +106,79 @@ export class TitleScene extends Phaser.Scene {
       callback: () => {
         this.attractIndex = (this.attractIndex + 1) % this.attractStep.length;
         const mode = this.attractStep[this.attractIndex];
-        if (mode === 'demo') {
-          this.showDemo();
-        } else {
-          this.showLeaderboard();
+        
+        switch (mode) {
+          case 'title':
+            this.showTitle();
+            break;
+          case 'demo':
+            this.showDemo();
+            break;
+          case 'leaderboard':
+            this.showLeaderboard();
+            break;
         }
       }
     });
   }
 
-  private launchDemoScene(): void {
-    if (this.scene.isActive('GameplayScene')) {
-      this.scene.stop('GameplayScene');
-    }
-    this.scene.launch('GameplayScene', { demo: true });
-    this.insertCoinText?.setVisible(true);
-    this.startBlinkingInsertCoin();
-    this.titleText?.setVisible(false);
-    this.titleTween?.pause();
-  }
-
-  private showDemo(): void {
-    this.scene.stop('LeaderboardScene');
-    this.launchDemoScene();
-  }
-
-  private showLeaderboard(): void {
-    this.stopBlinkingInsertCoin();
-    this.insertCoinText?.setVisible(false);
-    this.titleText?.setVisible(true);
-    this.titleTween?.resume();
-    controlMock.setEnabled(false);
+  private showTitle(): void {
+    // Hide other scenes
     this.scene.stop('GameplayScene');
     this.scene.stop('LeaderboardScene');
-    this.scene.launch('LeaderboardScene', { attractMode: true });
-    this.scene.bringToTop('LeaderboardScene');
+    
+    // Hide Demo UI
+    this.stopBlinkingInsertCoin();
+    controlMock.setEnabled(false);
+
+    // Show Title UI
+    this.titleText?.setVisible(true);
+    this.titleTween?.resume();
+    
     this.scene.bringToTop('TitleScene');
   }
 
+  private showDemo(): void {
+    // Hide Title UI
+    this.titleText?.setVisible(false);
+    this.titleTween?.pause();
+    
+    // Hide Leaderboard
+    this.scene.stop('LeaderboardScene');
+
+    // Launch Game in Demo Mode
+    if (this.scene.isActive('GameplayScene')) {
+        this.scene.stop('GameplayScene');
+    }
+    this.scene.launch('GameplayScene', { demo: true });
+    
+    // Show Demo UI
+    this.startBlinkingInsertCoin();
+    
+    // Ensure TitleScene is on top to show "INSERT COIN"
+    this.scene.bringToTop('TitleScene');
+  }
+
+  private showLeaderboard(): void {
+    // Hide Demo UI
+    this.stopBlinkingInsertCoin();
+    controlMock.setEnabled(false);
+    this.scene.stop('GameplayScene');
+    
+    // Hide Title UI
+    this.titleText?.setVisible(false);
+    this.titleTween?.pause();
+
+    // Show Leaderboard
+    this.scene.launch('LeaderboardScene', { attractMode: true });
+    this.scene.bringToTop('LeaderboardScene');
+    // TitleScene stays active but hidden behind or just managing logic
+  }
+
   private startRealGame(): void {
-    this.input.keyboard.off('keydown', this.startRealGame, this);
+    if (this.input.keyboard) {
+        this.input.keyboard.off('keydown', this.startRealGame, this);
+    }
     this.attractTimer?.remove();
     this.stopBlinkingInsertCoin();
     controlMock.setEnabled(false);

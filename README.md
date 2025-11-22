@@ -1,43 +1,39 @@
 # Figs in Space
 
-A single-page PhaserJS homage to classic vector shooters — now starring
-fig-shaped asteroids and the "Figs in Space" attract loop.
+A retro vector-shooter built with PhaserJS.
 
-## Development
+## Documentation Index
 
-### Running the Development Server
+- **[Game Requirements](./GAME_REQUIREMENTS.md):** Detailed breakdown of gameplay mechanics, controls, and progression.
+- **[Engineering Guidelines](./SWE_GUIDELINES.md):** Coding standards, project structure, and architectural patterns.
+- **[Agent Guidelines](./AGENTS.md):** Specific rules for AI agents working on this codebase.
+- **[Debug Tools](./DEBUG.md):** How to use the built-in debug logger and control mock.
+- **[Control Fixes](./CONTROL_FIXES.md):** History of specific control-related bug fixes.
 
-To start the development server:
+## Quick Start
 
-``` bash
+### Development
+```bash
+npm install
 npm run dev
 ```
+Starts the Vite server at `http://localhost:5173`.
 
-This will start the Vite development server, typically at
-`http://localhost:5173`. The server includes hot module replacement
-(HMR) for instant updates as you edit the code.
-
-### Building for Production
-
-To create a production build:
-
-``` bash
-npm run build
+### Linting & Testing
+```bash
+npm run lint   # Run ESLint
+npm test       # Run Vitest
 ```
 
-The built files will be output to the `dist/` directory.
-
-### Preview Production Build
-
-To preview the production build locally:
-
-``` bash
+### Production Build
+```bash
+npm run build
 npm run preview
 ```
+Builds to `dist/` directory.
 
 ## Project Structure
-
-- `src/` - TypeScript source files
-- `public/` - Static assets
-- `dist/` - Production build output
-- `index.html` - Entry HTML file
+- `src/`: Source code.
+- `public/`: Static assets.
+- `dist/`: Build output.
+- `tests/`: Unit and Integration tests.

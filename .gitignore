@@ -6,3 +6,5 @@ dist
 coverage
 npm-debug.log*
 *.tsbuildinfo
+*.mjs
+vite.config.ts.timestamp-*.mjs

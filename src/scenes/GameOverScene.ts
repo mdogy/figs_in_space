@@ -1,7 +1,6 @@
 import Phaser from 'phaser';
 import { getVectorColor } from '@theme/vectorPalette';
-import { GAME_DIMENSIONS } from '../game';
-import { leaderboardManager, Score } from '@core/LeaderboardManager'; // Import the manager
+import { leaderboardManager } from '@core/LeaderboardManager';
 
 export class GameOverScene extends Phaser.Scene {
   private score = 0;
@@ -10,7 +9,10 @@ export class GameOverScene extends Phaser.Scene {
   private nameText = '';
   private cursorGraphic?: Phaser.GameObjects.Graphics;
   private keyboardInput?: Phaser.Input.Keyboard.KeyboardPlugin;
-  private saveScorePrompt?: Phaser.GameObjects.Text;
+  // private saveScorePrompt?: Phaser.GameObjects.Text; // Unused
+  private canInteract = false;
+  // private interactionTimer?: Phaser.Time.TimerEvent; // Unused reference
+  // private instructionText?: Phaser.GameObjects.Text; // Unused reference
 
   constructor() {
     super('GameOverScene');
@@ -19,6 +21,8 @@ export class GameOverScene extends Phaser.Scene {
   init(data: { score: number }): void {
     this.score = data.score;
     this.isHighScore = leaderboardManager.isHighScore(this.score);
+    this.canInteract = false;
+    this.nameText = '';
   }
 
   create(): void {
@@ -44,8 +48,22 @@ export class GameOverScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
+    // Wait 10 seconds before proceeding
+    this.time.delayedCall(10000, this.enableInteraction, [], this);
+  }
+
+  update(): void {
+    if (this.canInteract && this.isHighScore && this.nameInput && this.cursorGraphic) {
+      this.nameInput.setText(this.nameText + ((Math.floor(this.time.now / 300) % 2) ? '_' : ''));
+    }
+  }
+
+  private enableInteraction(): void {
+    this.canInteract = true;
+    const { width, height } = this.scale;
+
     if (this.isHighScore) {
-      this.saveScorePrompt = this.add
+      this.add
         .text(width / 2, height / 2 + 50, 'ENTER YOUR NAME:', {
           fontFamily: 'Orbitron, monospace',
           fontSize: '24px',
@@ -66,13 +84,15 @@ export class GameOverScene extends Phaser.Scene {
         .setOrigin(0.5);
 
       this.cursorGraphic = this.add.graphics();
-      this.keyboardInput = this.input.keyboard;
-
-      this.keyboardInput?.on('keydown', this.handleNameInput, this);
-      this.time.delayedCall(5000, this.finalizeScore, [], this); // Auto-save after 5 seconds
+      
+      if (this.input.keyboard) {
+          this.keyboardInput = this.input.keyboard;
+          this.keyboardInput.on('keydown', this.handleNameInput, this);
+      }
     } else {
-      this.add
-        .text(width / 2, height / 2 + 100, 'PRESS ENTER TO RETURN TO TITLE', {
+       // No high score, just show return prompt
+       this.add
+        .text(width / 2, height / 2 + 100, 'PRESS ENTER TO CONTINUE', {
           fontFamily: 'Orbitron, monospace',
           fontSize: '24px',
           color: '#FFFFFF',
@@ -80,21 +100,24 @@ export class GameOverScene extends Phaser.Scene {
           strokeThickness: 3
         })
         .setOrigin(0.5);
-
-      this.input.keyboard.once('keydown-ENTER', () => {
-        this.scene.start('TitleScene');
-        this.scene.stop('GameOverScene');
+        
+      if (this.input.keyboard) {
+          this.input.keyboard.once('keydown-ENTER', () => {
+            this.scene.start('TitleScene');
+            this.scene.stop('GameOverScene');
+          });
+      }
+      
+      this.time.delayedCall(5000, () => {
+          this.scene.start('TitleScene');
+          this.scene.stop('GameOverScene');
       });
     }
   }
 
-  update(): void {
-    if (this.isHighScore && this.nameInput && this.cursorGraphic) {
-      this.nameInput.setText(this.nameText + ((Math.floor(this.time.now / 300) % 2) ? '_' : ''));
-    }
-  }
-
   private handleNameInput(event: KeyboardEvent): void {
+    if (!this.canInteract) return;
+
     if (event.key === 'Backspace' && this.nameText.length > 0) {
       this.nameText = this.nameText.slice(0, -1);
     } else if (event.key === 'Enter') {
@@ -106,12 +129,18 @@ export class GameOverScene extends Phaser.Scene {
 
   private finalizeScore(): void {
     this.keyboardInput?.off('keydown', this.handleNameInput, this);
-    this.time.removeAllEvents(); // Stop delayed call for auto-save
+    
+    // If name is empty, use a random name
+    let finalName = this.nameText.trim();
+    if (finalName === '') {
+        const randomNames = ['PILOT', 'ACE', 'ROOKIE', 'CADET', 'STAR', 'FIG'];
+        finalName = Phaser.Utils.Array.GetRandom(randomNames) + Phaser.Math.Between(100, 999).toString();
+    }
 
-    leaderboardManager.addScore(this.score, this.nameText.trim() === '' ? undefined : this.nameText.trim());
+    leaderboardManager.addScore(this.score, finalName);
 
-    // Transition to show the leaderboard (will create LeaderboardScene next)
+    // Transition to show the leaderboard (TitleScene will handle the cycle)
     this.scene.stop('GameOverScene');
-    this.scene.start('LeaderboardScene'); // Placeholder for next scene
+    this.scene.start('TitleScene');
   }
 }

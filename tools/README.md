@@ -1,3 +1,6 @@
-# Tooling
+# Tools & Scripts
 
-Reserved for repeatable scripts such as level generators or profiling helpers.
+This directory is reserved for development scripts and utilities, such as:
+- Asset generation scripts.
+- Build/Deployment helpers.
+- Performance profiling tools.

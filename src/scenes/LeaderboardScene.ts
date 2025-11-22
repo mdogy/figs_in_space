@@ -1,6 +1,5 @@
 import Phaser from 'phaser';
 import { getVectorColor } from '@theme/vectorPalette';
-import { GAME_DIMENSIONS } from '../game';
 import { leaderboardManager } from '@core/LeaderboardManager';
 
 export class LeaderboardScene extends Phaser.Scene {
@@ -53,10 +52,12 @@ export class LeaderboardScene extends Phaser.Scene {
         })
         .setOrigin(0.5);
 
-      this.input.keyboard.once('keydown-ENTER', () => {
-        this.scene.start('TitleScene');
-        this.scene.stop('LeaderboardScene');
-      });
+      if (this.input.keyboard) {
+          this.input.keyboard.once('keydown-ENTER', () => {
+            this.scene.start('TitleScene');
+            this.scene.stop('LeaderboardScene');
+          });
+      }
     }
   }
 }

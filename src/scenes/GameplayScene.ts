@@ -410,12 +410,15 @@ export class GameplayScene extends Phaser.Scene {
 
     new VectorExplosion(this, { radius: 36 }).setPosition(this.player.x, this.player.y);
 
-    this.lives -= 1;
+    this.lives = Math.max(0, this.lives - 1);
+    console.log(`[GAMEPLAY] Player hit! Lives remaining: ${this.lives}`);
     this.hud?.setLives(this.lives);
+    
     this.resetKeyState('death');
     this.playerVelocity = { x: 0, y: 0 };
     this.player.setVisible(false);
     this.isPlayerAlive = false;
+    // Invulnerable for 2s after respawn delay (Total = RESPAWN + 2000ms)
     this.invulnerableUntil = time + RESPAWN_DELAY_MS + INVULNERABLE_MS;
 
     if (this.lives <= 0) {
@@ -469,55 +472,71 @@ export class GameplayScene extends Phaser.Scene {
         return;
     }
 
-    // Find the closest asteroid
-    let closestAsteroid: Asteroid | null = null;
+    // Find the closest target (asteroid or saucer)
+    let closestTarget: { x: number, y: number, dist: number } | null = null;
     let minDistance = Number.MAX_VALUE;
+
+    // Check asteroids
     for (const asteroid of this.asteroids) {
         const d = Phaser.Math.Distance.Between(this.player.x, this.player.y, asteroid.x, asteroid.y);
         if (d < minDistance) {
             minDistance = d;
-            closestAsteroid = asteroid;
+            closestTarget = { x: asteroid.x, y: asteroid.y, dist: d };
         }
     }
 
-    const timerPulse = (Math.floor(this.time.now / SHOT_COOLDOWN_MS) % 2) === 0;
-    const input = { left: false, right: false, up: false, space: timerPulse };
+    // Check saucers (prioritize saucers if close)
+    for (const saucer of this.saucers) {
+        const d = Phaser.Math.Distance.Between(this.player.x, this.player.y, saucer.x, saucer.y);
+        if (d < minDistance * 0.8) { // 20% bias towards saucers
+            minDistance = d;
+            closestTarget = { x: saucer.x, y: saucer.y, dist: d };
+        }
+    }
 
-    if (closestAsteroid) {
-        const angleToAsteroid = Phaser.Math.Angle.Between(this.player.x, this.player.y, closestAsteroid.x, closestAsteroid.y);
-        const angleDifference = Phaser.Math.Angle.Wrap(angleToAsteroid - this.player.rotation);
+    const input = { left: false, right: false, up: true, space: false };
 
-        // Dangerously close: prioritize evasion
-        if (minDistance < 150) {
-            input.up = true; // Keep moving
-            // Turn away from the asteroid
-            if (angleDifference > 0) {
-                input.left = true;
-            } else {
-                input.right = true;
-            }
+    if (closestTarget) {
+        const angleToTarget = Phaser.Math.Angle.Between(this.player.x, this.player.y, closestTarget.x, closestTarget.y);
+        const angleDifference = Phaser.Math.Angle.Wrap(angleToTarget - this.player.rotation);
+        const absAngleDiff = Math.abs(angleDifference);
+
+        // Aggressive behavior:
+        // Always thrusting (up = true default above).
+        // Shoot frequently if roughly aligned.
+        if (absAngleDiff < 0.5 && Math.random() < 0.3) {
+            input.space = true;
+        }
+
+        // Evasion if too close
+        if (minDistance < 120) {
+            input.up = true; 
+            // Turn sharply away
+            if (angleDifference > 0) input.left = true;
+            else input.right = true;
+            
+            // Panic fire
+            input.space = true;
         } else {
-            // Far enough: align and shoot
-            input.up = minDistance > 200; // Move forward if far
-            if (Math.abs(angleDifference) < 0.1) {
-                input.space = true; // Shoot if aligned
-            } else {
-                // Turn towards the asteroid
-                if (angleDifference > 0) {
-                    input.right = true;
-                } else {
-                    input.left = true;
-                }
+            // Pursue
+            if (absAngleDiff > 0.1) {
+                if (angleDifference > 0) input.right = true;
+                else input.left = true;
+            }
+            
+            // Don't thrust into things, but keep moving
+            if (minDistance < 250 && absAngleDiff < 0.5) {
+                input.up = false; // Coast if aiming at target
             }
         }
     } else {
-        // No asteroids, just explore
-        input.up = true;
-        if (Math.random() < 0.02) {
-            input.right = true;
+        // Roam freely
+        if (Math.random() < 0.05) {
+             if (Math.random() > 0.5) input.right = true;
+             else input.left = true;
         }
     }
-
+    
     controlMock.setInput(input);
   }
 
