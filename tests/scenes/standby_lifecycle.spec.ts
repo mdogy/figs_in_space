@@ -27,7 +27,7 @@ vi.mock('../../src/scenes/GameOverScene', async () => {
 
 describe('Standby Lifecycle (TitleScene)', () => {
     let scene: TitleScene;
-    let timerCallback: Function;
+    let timerCallback: Function = () => {};
 
     beforeEach(() => {
         scene = new TitleScene();
@@ -38,6 +38,7 @@ describe('Standby Lifecycle (TitleScene)', () => {
                 setDepth: vi.fn().mockReturnThis(),
                 setVisible: vi.fn().mockReturnThis(),
                 setAlpha: vi.fn().mockReturnThis(),
+                setText: vi.fn().mockReturnThis(),
             })),
         };
         (scene as any).tweens = { add: vi.fn() };
@@ -50,7 +51,10 @@ describe('Standby Lifecycle (TitleScene)', () => {
         // Mock time event to capture callback
         (scene as any).time = {
             addEvent: vi.fn((config) => {
-                if (config.loop) timerCallback = config.callback;
+                // Only capture the 10s attract-cycle timer, not the blink timer
+                if (config.loop && config.delay === 10000) {
+                    timerCallback = config.callback;
+                }
                 return { remove: vi.fn() };
             }),
             delayedCall: vi.fn()

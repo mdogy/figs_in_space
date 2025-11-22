@@ -12,15 +12,15 @@ export interface MockInputSequence {
 export class ControlMock {
   private enabled: boolean = false;
   private sequence: MockInputSequence[] = [];
-  private startTime: number = 0;
-  private currentTime: number = 0;
+  private startTime: number | null = null;
+  private currentTime: number | null = null;
   private input: MockInputSequence['keys'] | null = null;
 
   setEnabled(enabled: boolean): void {
     this.enabled = enabled;
     if (enabled) {
-      this.startTime = 0; // Will be initialized on first update
-      this.currentTime = 0;
+      this.startTime = null; // Will be initialized on first update
+      this.currentTime = null;
       console.log('[MOCK] Control mock enabled');
     } else {
       this.input = null; // Clear direct input when disabled
@@ -31,7 +31,7 @@ export class ControlMock {
   update(currentTime: number): void {
     if (!this.enabled) return;
 
-    if (this.startTime === 0) {
+    if (this.startTime === null) {
       this.startTime = currentTime;
     }
     this.currentTime = currentTime;
@@ -43,7 +43,7 @@ export class ControlMock {
 
   setInput(input: MockInputSequence['keys']): void {
     if (this.enabled) {
-        this.input = input;
+      this.input = input;
     }
   }
 
@@ -60,15 +60,15 @@ export class ControlMock {
     
     // Direct input from AI overrides sequence
     if (this.input) {
-        return this.input;
+      return this.input;
     }
     
     if (this.sequence.length === 0) {
-        return null;
+      return null;
     }
 
-    const now = this.currentTime || Date.now();
-    const startedAt = this.startTime || now;
+    const now = this.currentTime ?? Date.now();
+    const startedAt = this.startTime ?? now;
     const elapsed = now - startedAt;
 
     // Find the most recent input state from sequence
@@ -85,7 +85,7 @@ export class ControlMock {
   }
 
   reset(): void {
-    this.startTime = this.currentTime || Date.now();
+    this.startTime = this.currentTime ?? Date.now();
     console.log('[MOCK] Reset to start');
   }
 

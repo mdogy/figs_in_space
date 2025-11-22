@@ -37,7 +37,7 @@ Automated attract mode that cycles through three sub-states every 10 seconds. No
 
 ### Lives & Damage
 - **Initial Lives:** 10.
-- **Life Lost:** Collision with a Fig (asteroid), Alien Ship, Black Hole, or Alien Laser.
+- **Life Lost:** Collision with a Fig, Alien Ship, Black Hole, or Alien Laser.
 - **Invulnerability:**
   - After losing a life, the ship is invincible for 2 seconds.
   - Minimum gameplay duration is ~20 seconds (10 lives * 2s invulnerability).
@@ -45,8 +45,8 @@ Automated attract mode that cycles through three sub-states every 10 seconds. No
 ### Level Progression
 - **Level 1:** Start with large figs.
 - **Progression:**
-  - Each level increases the number of starting large figs.
-  - Fig speed increases by 5% per level (up to Level 9).
+  - Each level increases the number of starting large figs until Level 9; after Level 9 fig count stays flat.
+  - Fig speed increases by 5% per level (up to Level 9); after Level 9 speed stays flat.
   - Level ends when all figs are destroyed.
 - **Enemies:**
   - **Level 3:** First Alien Ship appears (flies by and fires).
@@ -55,7 +55,7 @@ Automated attract mode that cycles through three sub-states every 10 seconds. No
   - **Level 9:** Black Hole appears.
     - Sucks in anything (Player, Aliens, Figs).
     - Speed/Number of figs stop increasing.
-  - **Frequency:** New Black Hole every 4 levels after Level 9.
+  - **Frequency:** New Black Hole added every 4 levels after Level 9 (cumulative).
 
 ---
 
@@ -73,7 +73,13 @@ Automated attract mode that cycles through three sub-states every 10 seconds. No
 ---
 
 ## 4. Physics & Mechanics
-- **Lasers:** Emanate from the ship's nose.
+- **Lasers:** 
+  - Emanate from the ship's nose.
+  - Impact of a laser bolt breaks up a larger fig into smaller figs
+  - Impact of a laser bolts destroys a smallest fig
+  - Impact of a laser bolt causes the enemy ship to explode
+  - Impact of a laser bolt has no effect on black holes
+  - Range of laser bolts increases every three levels by boosting lifespan until the bolt can cross the screen; no further increases past that point.
 - **Collisions:**
   - Ship vs. Hazard -> Lose 1 Life.
   - Figs vs. Figs -> Break into smaller figs.
@@ -84,4 +90,7 @@ Automated attract mode that cycles through three sub-states every 10 seconds. No
 ## 5. Scoring
 - **Base Score:** Increases by 2.5% per level.
 - **Multipliers:** Triple points for destroying Alien Ships.
-- **Leaderboard:** Tracks top 10 scores.
+- **Leaderboard:** 
+  - Tracks top 10 scores.
+  - Users enter up to 20 characters for leader board name.
+  - If they just hit enter without a name, random name generated.

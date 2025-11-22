@@ -5,7 +5,7 @@ import { angleToVector, limitMagnitude, Vector2, wrapPosition } from '@core/vect
 import { getVectorColor, VECTOR_LINE_WIDTH } from '@theme/vectorPalette';
 import { GAME_DIMENSIONS } from '../game';
 import { LaserBolt } from '@prefabs/LaserBolt';
-import { Asteroid, AsteroidConfig } from '@prefabs/Asteroid';
+import { Fig, FigConfig } from '@prefabs/Fig';
 import { gameDebug } from '@core/debugLogger';
 import { controlMock, ControlMock } from '@core/controlMock';
 import { VectorExplosion } from '@prefabs/VectorExplosion';
@@ -18,7 +18,9 @@ const MAX_PLAYER_SPEED = 0.35;
 const INITIAL_LIVES = 10;
 const RESPAWN_DELAY_MS = 750;
 const INVULNERABLE_MS = 2000;
-const BASE_ASTEROID_COUNT = 5;
+const LASER_BASE_LIFESPAN_MS = 600;
+const LASER_LIFESPAN_STEP_MS = 300;
+const BASE_FIG_COUNT = 5;
 const DEMO_MAX_DURATION_MS = 10000;
 const DEMO_STARTING_SCORE_RANGE = { min: 500, max: 4500 };
 const DEMO_MAX_LEVEL = 12;
@@ -29,10 +31,10 @@ export class GameplayScene extends Phaser.Scene {
   private player!: PlayerShip;
   private hud?: HudOverlay;
   private lasers: LaserBolt[] = [];
-  private asteroids: Asteroid[] = [];
+  private figs: Fig[] = [];
   private saucers: EnemySaucer[] = [];
   private saucerLasers: EnemyLaser[] = [];
-  private blackHole?: BlackHole;
+  private blackHoles: BlackHole[] = [];
   private playerVelocity: Vector2 = { x: 0, y: 0 };
   private lastShotAt = 0;
   private score = 0;
@@ -68,10 +70,10 @@ export class GameplayScene extends Phaser.Scene {
     this.invulnerableUntil = 0;
     this.playerVelocity = { x: 0, y: 0 };
     this.lasers = [];
-    this.asteroids = [];
+    this.figs = [];
     this.saucers = [];
     this.saucerLasers = [];
-    this.blackHole = undefined;
+    this.blackHoles = [];
     this.lastShotAt = 0;
     this.demoStartedAt = this.time.now;
     this.keyState = { left: false, right: false, up: false, down: false, space: false };
@@ -137,7 +139,7 @@ export class GameplayScene extends Phaser.Scene {
       this.updateLasers(delta);
       this.updateEnemyLasers(delta, time);
       this.updateSaucers(time, delta);
-      this.updateAsteroids(delta);
+      this.updateFigs(delta);
       return;
     }
 
@@ -146,7 +148,7 @@ export class GameplayScene extends Phaser.Scene {
     this.updateLasers(delta);
     this.updateEnemyLasers(delta, time);
     this.updateSaucers(time, delta);
-    this.updateAsteroids(delta);
+    this.updateFigs(delta);
     this.checkCollisions(time);
     this.logDebugState(time);
 
@@ -212,9 +214,7 @@ export class GameplayScene extends Phaser.Scene {
       this.playerVelocity = limitMagnitude(this.playerVelocity, MAX_PLAYER_SPEED);
     }
 
-    if (this.blackHole) {
-      this.blackHole.applyPull(this.player, this.playerVelocity);
-    }
+    this.blackHoles.forEach((hole) => hole.applyPull(this.player, this.playerVelocity));
 
     // Apply slight drag
     this.playerVelocity.x *= 0.995;
@@ -264,7 +264,14 @@ export class GameplayScene extends Phaser.Scene {
     const muzzleX = this.player.x + Math.cos(muzzleAngle) * shipNoseOffset;
     const muzzleY = this.player.y + Math.sin(muzzleAngle) * shipNoseOffset;
 
-    const bolt = new LaserBolt(this, { angle: muzzleAngle });
+    const rangeTier = Math.max(0, Math.floor((this.level - 1) / 3));
+    const maxLifespan = Math.ceil(Math.hypot(GAME_DIMENSIONS.width, GAME_DIMENSIONS.height) / 0.4);
+    const lifespan = Math.min(
+      LASER_BASE_LIFESPAN_MS + rangeTier * LASER_LIFESPAN_STEP_MS,
+      maxLifespan
+    );
+
+    const bolt = new LaserBolt(this, { angle: muzzleAngle, lifespan });
     bolt.setPosition(muzzleX, muzzleY);
     bolt.setRotation(muzzleAngle + Math.PI / 2); // Rotate the bolt to face the direction of travel
     this.add.existing(bolt);
@@ -282,26 +289,24 @@ export class GameplayScene extends Phaser.Scene {
     });
   }
 
-  private updateAsteroids(delta: number): void {
-    this.asteroids.forEach((asteroid) => {
-      asteroid.updateMotion(delta);
-      if (this.blackHole) {
-        this.blackHole.applyPull(asteroid, asteroid.velocity);
-      }
-      asteroid.x = wrapPosition(asteroid.x, GAME_DIMENSIONS.width);
-      asteroid.y = wrapPosition(asteroid.y, GAME_DIMENSIONS.height);
+  private updateFigs(delta: number): void {
+    this.figs.forEach((fig) => {
+      fig.updateMotion(delta);
+      this.blackHoles.forEach((hole) => hole.applyPull(fig, fig.velocity));
+      fig.x = wrapPosition(fig.x, GAME_DIMENSIONS.width);
+      fig.y = wrapPosition(fig.y, GAME_DIMENSIONS.height);
     });
-    this.asteroids = this.asteroids.filter((asteroid) => {
-      if (asteroid.isDestroyed()) {
-        asteroid.destroy();
+    this.figs = this.figs.filter((fig) => {
+      if (fig.isDestroyed()) {
+        fig.destroy();
         return false;
       }
       return true;
     });
 
-    this.handleAsteroidCollisions();
+    this.handleFigCollisions();
 
-    if (this.asteroids.length === 0) {
+    if (this.figs.length === 0) {
       // Clear remaining saucers before next level
       this.saucers.forEach(s => s.destroy());
       this.saucers = [];
@@ -311,19 +316,19 @@ export class GameplayScene extends Phaser.Scene {
     }
   }
 
-  private handleAsteroidCollisions(): void {
+  private handleFigCollisions(): void {
     const splits = new Set<number>();
 
-    for (let i = 0; i < this.asteroids.length; i += 1) {
-      for (let j = i + 1; j < this.asteroids.length; j += 1) {
-        const a = this.asteroids[i];
-        const b = this.asteroids[j];
+    for (let i = 0; i < this.figs.length; i += 1) {
+      for (let j = i + 1; j < this.figs.length; j += 1) {
+        const a = this.figs[i];
+        const b = this.figs[j];
         const dx = b.x - a.x;
         const dy = b.y - a.y;
         const distSq = dx * dx + dy * dy;
         const minDist = a.radius + b.radius;
         if (distSq <= minDist * minDist) {
-          this.resolveAsteroidBounce(a, b);
+          this.resolveFigBounce(a, b);
           if (a.radius > 32) splits.add(i);
           if (b.radius > 32) splits.add(j);
         }
@@ -332,10 +337,10 @@ export class GameplayScene extends Phaser.Scene {
 
     // Split after processing collisions to avoid index churn mid-loop
     const indices = Array.from(splits).sort((a, b) => b - a);
-    indices.forEach(index => this.splitAsteroidNoScore(index));
+    indices.forEach(index => this.splitFigNoScore(index));
   }
 
-  private resolveAsteroidBounce(a: Asteroid, b: Asteroid): void {
+  private resolveFigBounce(a: Fig, b: Fig): void {
     const dx = b.x - a.x;
     const dy = b.y - a.y;
     const distance = Math.max(Math.hypot(dx, dy), 0.0001);
@@ -358,19 +363,19 @@ export class GameplayScene extends Phaser.Scene {
     b.y += ny * overlap * 0.5;
   }
 
-  private splitAsteroidNoScore(index: number): void {
-    const asteroid = this.asteroids[index];
-    if (!asteroid) return;
-    const radius = asteroid.radius;
-    asteroid.destroy();
-    this.asteroids.splice(index, 1);
+  private splitFigNoScore(index: number): void {
+    const fig = this.figs[index];
+    if (!fig) return;
+    const radius = fig.radius;
+    fig.destroy();
+    this.figs.splice(index, 1);
 
     if (radius > 28) {
       const fragments = Phaser.Math.Between(2, 3);
       for (let i = 0; i < fragments; i += 1) {
-        this.spawnAsteroids(1, {
+        this.spawnFigs(1, {
           radius: radius * 0.6,
-          position: { x: asteroid.x, y: asteroid.y }
+          position: { x: fig.x, y: fig.y }
         });
       }
     }
@@ -378,28 +383,30 @@ export class GameplayScene extends Phaser.Scene {
 
   private checkCollisions(time: number): void {
     this.lasers.forEach((laser, laserIndex) => {
-      this.asteroids.forEach((asteroid, asteroidIndex) => {
-        const distance = Phaser.Math.Distance.Between(laser.x, laser.y, asteroid.x, asteroid.y);
-        if (distance <= asteroid.radius) {
-          this.splitAsteroid(asteroid, asteroidIndex);
+      this.figs.forEach((fig, figIndex) => {
+        const distance = Phaser.Math.Distance.Between(laser.x, laser.y, fig.x, fig.y);
+        if (distance <= fig.radius) {
+          this.splitFig(fig, figIndex);
           this.removeLaser(laserIndex);
         }
       });
     });
 
-    this.asteroids.forEach((asteroid) => {
-      const distanceToPlayer = Phaser.Math.Distance.Between(this.player.x, this.player.y, asteroid.x, asteroid.y);
+    this.figs.forEach((fig) => {
+      const distanceToPlayer = Phaser.Math.Distance.Between(this.player.x, this.player.y, fig.x, fig.y);
       const playerRadius = 24; // Ship size is 48; use half as collision radius
-      if (this.isPlayerAlive && distanceToPlayer <= asteroid.radius + playerRadius) {
+      if (this.isPlayerAlive && distanceToPlayer <= fig.radius + playerRadius) {
         this.handlePlayerHit(time);
       }
     });
 
-    if (this.blackHole && this.isPlayerAlive) {
-      const distance = Phaser.Math.Distance.Between(this.player.x, this.player.y, this.blackHole.x, this.blackHole.y);
-      if (distance <= this.blackHole.radius) {
-        this.handlePlayerHit(time);
-      }
+    if (this.isPlayerAlive) {
+      this.blackHoles.forEach((hole) => {
+        const distance = Phaser.Math.Distance.Between(this.player.x, this.player.y, hole.x, hole.y);
+        if (distance <= hole.radius) {
+          this.handlePlayerHit(time);
+        }
+      });
     }
   }
 
@@ -418,8 +425,9 @@ export class GameplayScene extends Phaser.Scene {
     this.playerVelocity = { x: 0, y: 0 };
     this.player.setVisible(false);
     this.isPlayerAlive = false;
+    const respawnTime = time + RESPAWN_DELAY_MS;
     // Invulnerable for 2s after respawn delay (Total = RESPAWN + 2000ms)
-    this.invulnerableUntil = time + RESPAWN_DELAY_MS + INVULNERABLE_MS;
+    this.invulnerableUntil = respawnTime + INVULNERABLE_MS;
 
     if (this.lives <= 0) {
       this.endGame();
@@ -427,16 +435,17 @@ export class GameplayScene extends Phaser.Scene {
     }
 
     this.time.delayedCall(RESPAWN_DELAY_MS, () => {
-      this.respawnPlayer(this.invulnerableUntil);
+      this.respawnPlayer(respawnTime);
     });
   }
 
-  private respawnPlayer(time: number): void {
+  private respawnPlayer(respawnAt: number): void {
     this.player.setPosition(GAME_DIMENSIONS.width / 2, GAME_DIMENSIONS.height / 2);
     this.player.rotation = 0;
     this.playerVelocity = { x: 0, y: 0 };
     this.player.setVisible(true).setAlpha(0.35);
-    this.invulnerableUntil = time + INVULNERABLE_MS;
+    this.invulnerableUntil = respawnAt + INVULNERABLE_MS;
+    this.isPlayerAlive = true;
 
     this.tweens.add({
       targets: this.player,
@@ -447,7 +456,6 @@ export class GameplayScene extends Phaser.Scene {
       onComplete: () => {
         this.player.setAlpha(1);
         this.invulnerableUntil = 0;
-        this.isPlayerAlive = true;
       }
     });
   }
@@ -472,16 +480,16 @@ export class GameplayScene extends Phaser.Scene {
         return;
     }
 
-    // Find the closest target (asteroid or saucer)
+    // Find the closest target (fig or saucer)
     let closestTarget: { x: number, y: number, dist: number } | null = null;
     let minDistance = Number.MAX_VALUE;
 
-    // Check asteroids
-    for (const asteroid of this.asteroids) {
-        const d = Phaser.Math.Distance.Between(this.player.x, this.player.y, asteroid.x, asteroid.y);
+    // Check figs
+    for (const fig of this.figs) {
+        const d = Phaser.Math.Distance.Between(this.player.x, this.player.y, fig.x, fig.y);
         if (d < minDistance) {
             minDistance = d;
-            closestTarget = { x: asteroid.x, y: asteroid.y, dist: d };
+            closestTarget = { x: fig.x, y: fig.y, dist: d };
         }
     }
 
@@ -540,20 +548,20 @@ export class GameplayScene extends Phaser.Scene {
     controlMock.setInput(input);
   }
 
-  private splitAsteroid(hitAsteroid: Asteroid, asteroidIndex: number): void {
-    const baseScore = Math.max(10, Math.round(hitAsteroid.radius));
+  private splitFig(hitFig: Fig, figIndex: number): void {
+    const baseScore = Math.max(10, Math.round(hitFig.radius));
     this.score += Math.round(baseScore * this.scoreMultiplier);
     this.hud?.setScore(this.score);
-    const radius = hitAsteroid.radius;
-    hitAsteroid.destroy();
-    this.asteroids.splice(asteroidIndex, 1);
+    const radius = hitFig.radius;
+    hitFig.destroy();
+    this.figs.splice(figIndex, 1);
 
     if (radius > 28) {
       const fragments = Phaser.Math.Between(2, 3);
       for (let i = 0; i < fragments; i += 1) {
-        this.spawnAsteroids(1, {
+        this.spawnFigs(1, {
           radius: radius * 0.6,
-          position: { x: hitAsteroid.x, y: hitAsteroid.y }
+          position: { x: hitFig.x, y: hitFig.y }
         });
       }
     }
@@ -572,19 +580,19 @@ export class GameplayScene extends Phaser.Scene {
     graphics.setDepth(-1).setScrollFactor(0);
   }
 
-  private spawnAsteroids(count: number, overrides: Partial<AsteroidConfig> = {}, speedMultiplier = 1): void {
+  private spawnFigs(count: number, overrides: Partial<FigConfig> = {}, speedMultiplier = 1): void {
     for (let i = 0; i < count; i += 1) {
       const edge = Phaser.Math.Between(0, 3);
       const position = overrides.position ?? this.randomEdgePosition(edge);
       const baseSpeed = overrides.speed ?? Phaser.Math.FloatBetween(0.02, 0.08);
-      const asteroid = new Asteroid(this, {
+      const fig = new Fig(this, {
         radius: overrides.radius ?? Phaser.Math.Between(35, 60),
         position,
         direction: Phaser.Math.FloatBetween(0, Math.PI * 2),
         speed: baseSpeed * speedMultiplier
       });
-      this.asteroids.push(asteroid);
-      this.add.existing(asteroid);
+      this.figs.push(fig);
+      this.add.existing(fig);
     }
   }
 
@@ -604,9 +612,10 @@ export class GameplayScene extends Phaser.Scene {
   private startLevel(level: number): void {
     this.level = level;
     this.scoreMultiplier = 1 + (level - 1) * 0.25;
-    const asteroidCount = BASE_ASTEROID_COUNT + (level - 1);
-    const speedMultiplier = 1 + (level - 1) * 0.15;
-    this.spawnAsteroids(asteroidCount, {}, speedMultiplier);
+    const cappedLevel = Math.min(level, 9);
+    const figCount = BASE_FIG_COUNT + (cappedLevel - 1);
+    const speedMultiplier = 1 + (cappedLevel - 1) * 0.05;
+    this.spawnFigs(figCount, {}, speedMultiplier);
     this.hud?.setLevel(this.level);
     this.spawnBlackHoleIfNeeded();
     this.scheduleSaucersForLevel();
@@ -695,13 +704,29 @@ export class GameplayScene extends Phaser.Scene {
   }
 
   private spawnBlackHoleIfNeeded(): void {
-    if (this.level >= 9 && !this.blackHole) {
-      const pos = { x: GAME_DIMENSIONS.width * 0.5, y: GAME_DIMENSIONS.height * 0.5 };
-      this.blackHole = new BlackHole(this, { position: pos });
-      this.add.existing(this.blackHole);
-    } else if (this.level < 9 && this.blackHole) {
-      this.blackHole.destroy();
-      this.blackHole = undefined;
+    if (this.level < 9) {
+      this.blackHoles.forEach((hole) => hole.destroy());
+      this.blackHoles = [];
+      return;
+    }
+
+    const requiredHoles = 1 + Math.floor((this.level - 9) / 4);
+
+    if (this.blackHoles.length > requiredHoles) {
+      const extras = this.blackHoles.splice(requiredHoles);
+      extras.forEach((hole) => hole.destroy());
+      return;
+    }
+
+    const holesToAdd = requiredHoles - this.blackHoles.length;
+    for (let i = 0; i < holesToAdd; i += 1) {
+      const pos = {
+        x: Phaser.Math.Between(120, GAME_DIMENSIONS.width - 120),
+        y: Phaser.Math.Between(120, GAME_DIMENSIONS.height - 120)
+      };
+      const hole = new BlackHole(this, { position: pos });
+      this.blackHoles.push(hole);
+      this.add.existing(hole);
     }
   }
 
@@ -724,7 +749,7 @@ export class GameplayScene extends Phaser.Scene {
       },
       laserCount: this.lasers.length,
       laserPositions: this.lasers.map(laser => ({ x: laser.x, y: laser.y })),
-      asteroidCount: this.asteroids.length,
+      figCount: this.figs.length,
       score: this.score
     });
   }

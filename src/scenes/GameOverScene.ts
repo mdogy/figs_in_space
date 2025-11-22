@@ -13,6 +13,7 @@ export class GameOverScene extends Phaser.Scene {
   private canInteract = false;
   // private interactionTimer?: Phaser.Time.TimerEvent; // Unused reference
   // private instructionText?: Phaser.GameObjects.Text; // Unused reference
+  private static readonly MAX_NAME_LENGTH = 20;
 
   constructor() {
     super('GameOverScene');
@@ -54,7 +55,7 @@ export class GameOverScene extends Phaser.Scene {
 
   update(): void {
     if (this.canInteract && this.isHighScore && this.nameInput && this.cursorGraphic) {
-      this.nameInput.setText(this.nameText + ((Math.floor(this.time.now / 300) % 2) ? '_' : ''));
+      this.updateNameDisplay();
     }
   }
 
@@ -89,6 +90,7 @@ export class GameOverScene extends Phaser.Scene {
           this.keyboardInput = this.input.keyboard;
           this.keyboardInput.on('keydown', this.handleNameInput, this);
       }
+      this.updateNameDisplay();
     } else {
        // No high score, just show return prompt
        this.add
@@ -122,9 +124,10 @@ export class GameOverScene extends Phaser.Scene {
       this.nameText = this.nameText.slice(0, -1);
     } else if (event.key === 'Enter') {
       this.finalizeScore();
-    } else if (this.nameText.length < 12 && event.key.match(/^[a-zA-Z0-9 ]$/)) {
+    } else if (this.nameText.length < GameOverScene.MAX_NAME_LENGTH && event.key.match(/^[a-zA-Z0-9 ]$/)) {
       this.nameText += event.key.toUpperCase();
     }
+    this.updateNameDisplay();
   }
 
   private finalizeScore(): void {
@@ -142,5 +145,11 @@ export class GameOverScene extends Phaser.Scene {
     // Transition to show the leaderboard (TitleScene will handle the cycle)
     this.scene.stop('GameOverScene');
     this.scene.start('TitleScene');
+  }
+
+  private updateNameDisplay(): void {
+    if (!this.nameInput || typeof (this.nameInput as any).setText !== 'function') return;
+    const suffix = (Math.floor(this.time.now / 300) % 2) ? '_' : '';
+    this.nameInput.setText((this.nameText || '_') + suffix);
   }
 }

@@ -1,5 +1,5 @@
 {
-  "name": "retro-vector-asteroids",
+  "name": "figs-in-space",
   "private": true,
   "version": "1.0.0",
   "type": "module",
@@ -19,6 +19,8 @@
     "@typescript-eslint/eslint-plugin": "^6.21.0",
     "@typescript-eslint/parser": "^6.21.0",
     "eslint": "^8.56.0",
+    "jsdom": "^22.1.0",
+    "phaser3spectorjs": "^0.0.8",
     "typescript": "^5.3.3",
     "vite": "^5.0.12",
     "vitest": "^1.2.0"

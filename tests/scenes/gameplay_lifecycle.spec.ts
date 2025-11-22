@@ -3,6 +3,36 @@ import { GameplayScene } from '../../src/scenes/GameplayScene';
 import { ControlMock } from '../../src/core/controlMock';
 import { gameDebug } from '../../src/core/debugLogger';
 
+vi.mock('../../src/prefabs/PlayerShip', () => {
+    class PlayerShipStub {
+        x = 0;
+        y = 0;
+        rotation = 0;
+        active = true;
+        size: number;
+        constructor(_scene?: unknown, { size = 48 } = {}) {
+            this.size = size;
+        }
+        setPosition = vi.fn((x: number, y: number) => {
+            this.x = x;
+            this.y = y;
+            return this;
+        });
+        setVisible = vi.fn(() => this);
+        setAlpha = vi.fn(() => this);
+        setName = vi.fn(() => this);
+    }
+    return { PlayerShip: PlayerShipStub };
+});
+
+vi.mock('../../src/prefabs/VectorExplosion', () => {
+    class VectorExplosionStub {
+        setPosition = vi.fn(() => this);
+        destroy = vi.fn();
+    }
+    return { VectorExplosion: VectorExplosionStub };
+});
+
 // Mock Phaser
 const mockScene = {
     start: vi.fn(),
@@ -42,6 +72,7 @@ describe('GameplayScene Lifecycle', () => {
         // Inject mocks
         (scene as any).scene = mockScene;
         (scene as any).input = mockInput;
+        (scene as any).sys = { queueDepthSort: vi.fn() };
         (scene as any).add = {
             existing: vi.fn(),
             graphics: vi.fn(() => ({
@@ -55,7 +86,7 @@ describe('GameplayScene Lifecycle', () => {
         (scene as any).time = {
             now: 0,
             delayedCall: vi.fn((delay, callback) => {
-                // Store callback to trigger later if needed, or just ignore for now
+                callback();
                 return { remove: vi.fn() };
             })
         };
@@ -65,6 +96,10 @@ describe('GameplayScene Lifecycle', () => {
         };
         (scene as any).scale = { width: 800, height: 600 };
         (scene as any).events = { once: vi.fn(), on: vi.fn() };
+        (scene as any).drawReticle = vi.fn();
+        (scene as any).ensureHud = vi.fn();
+        (scene as any).updateHudStats = vi.fn();
+        (scene as any).startLevel = vi.fn();
         
         // Mock Physics/Game Objects if necessary
         // For now, we test logic, not rendering.
