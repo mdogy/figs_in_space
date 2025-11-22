@@ -9,3 +9,4 @@ npm-debug.log*
 *.tsbuildinfo
 *.mjs
 vite.config.ts.timestamp-*.mjs
+codex_run_*.log
