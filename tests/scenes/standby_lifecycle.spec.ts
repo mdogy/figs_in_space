@@ -95,6 +95,7 @@ describe('Game Over Lifecycle', () => {
                 setOrigin: vi.fn().mockReturnThis(),
                 setDepth: vi.fn().mockReturnThis(),
                 setVisible: vi.fn().mockReturnThis(),
+                setText: vi.fn().mockReturnThis(),
             })),
             graphics: vi.fn(),
         };
@@ -123,5 +124,23 @@ describe('Game Over Lifecycle', () => {
         // Trigger timeout
         delayedCallback.call(scene);
         expect((scene as any).canInteract).toBe(true);
+    });
+
+    it('allows up to 20 character leaderboard names', () => {
+        scene.init({ score: 100 });
+        // Simulate high score path
+        (scene as any).isHighScore = true;
+        (scene as any).time.now = 0;
+        (scene as any).nameInput = { setText: vi.fn() };
+        (scene as any).canInteract = true;
+
+        const letters = 'ABCDEFGHIJKLMNOPQRSTU'; // 21 chars
+        letters.split('').forEach((key) => {
+            (scene as any).handleNameInput({ key } as KeyboardEvent);
+        });
+
+        expect((scene as any).nameText.length).toBe(20);
+        expect((scene as any).nameText).toBe('ABCDEFGHIJKLMNOPQRST');
+        expect((scene as any).nameInput.setText).toHaveBeenCalled();
     });
 });

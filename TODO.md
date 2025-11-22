@@ -16,7 +16,7 @@
 - [x] Stabilize automated test harness (jsdom env, Phaser spector stub)
 - [ ] Refine game difficulty curves
 - [ ] Consolidate Phaser scene test helpers to reduce per-test mocking
-- [ ] Add tests for black hole accumulation cadence (Level 9 + every 4 levels)
-- [ ] Add tests for laser lifespan/range scaling every 3 levels
-- [ ] Add tests confirming leaderboard name entry accepts 20 characters and saves fallback names
-- [ ] Add acceptance test covering fig speed/count plateau after Level 9
+- [x] Add tests for black hole accumulation cadence (Level 9 + every 4 levels)
+- [x] Add tests for laser lifespan/range scaling every 3 levels
+- [x] Add tests confirming leaderboard name entry accepts 20 characters and saves fallback names
+- [x] Add acceptance test covering fig speed/count plateau after Level 9
