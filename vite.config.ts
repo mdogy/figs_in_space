@@ -1,8 +1,10 @@
 import { defineConfig } from 'vitest/config'
-import { resolve } from 'path'
+import { resolve, join } from 'path'
+import { tmpdir } from 'os'
 
 export default defineConfig({
-  cacheDir: './.vite-cache',
+  // Store Vite cache outside the Dropbox mount to avoid WSL rename permission issues
+  cacheDir: join(tmpdir(), 'figs-in-space-vite-cache'),
   resolve: {
     alias: {
       '@core': resolve(__dirname, './src/core'),
@@ -21,9 +23,6 @@ export default defineConfig({
     outDir: 'dist',
     assetsDir: 'assets',
     sourcemap: true
-  },
-  optimizeDeps: {
-    force: true
   },
   test: {
     globals: true,
