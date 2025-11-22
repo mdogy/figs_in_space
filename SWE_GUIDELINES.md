@@ -11,7 +11,7 @@
 ### 1.2. Layout
 - `src/core/`: Engine components (config, main loop, utilities).
 - `src/scenes/`: Phaser Scenes (Boot, Title, Gameplay, HUD, GameOver).
-- `src/prefabs/`: Game entities (Player, Enemy, Asteroid).
+- `src/prefabs/`: Game entities (Player, Enemy, Fig).
 - `src/ui/`: HUD and Interface elements.
 - `src/theme/`: Visual styles and palettes.
 - `tests/`: Mirror structure of `src/`.

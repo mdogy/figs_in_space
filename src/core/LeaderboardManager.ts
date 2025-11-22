@@ -3,7 +3,7 @@ export interface Score {
     score: number;
 }
 
-const LEADERBOARD_KEY = 'asteroidsLeaderboard';
+const LEADERBOARD_KEY = 'figsInSpaceLeaderboard';
 const MAX_SCORES = 10;
 
 class LeaderboardManager {

@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Asteroids game includes debugging tools to help diagnose control and game state issues.
+The Figs in Space game includes debugging tools to help diagnose control and game state issues.
 
 ## Debug Logger
 
@@ -38,7 +38,7 @@ Each log entry contains:
 - `playerVelocity`: {x, y} velocity vector
 - `inputState`: Current state of all input keys
 - `laserCount`: Number of active laser bolts
-- `asteroidCount`: Number of active asteroids
+- `figCount`: Number of active figs
 - `score`: Current score
 
 ## Control Mock

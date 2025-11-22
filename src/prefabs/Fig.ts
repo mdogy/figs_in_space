@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { angleToVector, Vector2 } from '@core/vectorMath';
 import { getVectorColor, VECTOR_LINE_WIDTH } from '@theme/vectorPalette';
 
-export interface AsteroidConfig {
+export interface FigConfig {
   radius?: number;
   speed?: number;
   position?: Vector2;
@@ -10,14 +10,14 @@ export interface AsteroidConfig {
   jaggedness?: number;
 }
 
-export class Asteroid extends Phaser.GameObjects.Graphics {
+export class Fig extends Phaser.GameObjects.Graphics {
   public velocity: Phaser.Math.Vector2;
   public radius: number;
   private life: number;
 
-  constructor(scene: Phaser.Scene, config: AsteroidConfig = {}) {
+  constructor(scene: Phaser.Scene, config: FigConfig = {}) {
     super(scene);
-    this.setName('Asteroid');
+    this.setName('Fig');
     this.radius = config.radius ?? Phaser.Math.Between(30, 60);
     const speed = config.speed ?? Phaser.Math.FloatBetween(0.02, 0.08);
     const direction = config.direction ?? Phaser.Math.FloatBetween(0, Math.PI * 2);

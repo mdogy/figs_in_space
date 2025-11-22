@@ -12,7 +12,7 @@ export interface GameState {
   };
   laserCount: number;
   laserPositions?: { x: number; y: number }[];
-  asteroidCount: number;
+  figCount: number;
   score: number;
 }
 
@@ -83,7 +83,7 @@ export class DebugLogger {
         vel: `(${state.playerVelocity.x.toFixed(3)}, ${state.playerVelocity.y.toFixed(3)})`,
         input: state.inputState,
         lasers: state.laserCount,
-        asteroids: state.asteroidCount,
+        figs: state.figCount,
         score: state.score
       });
     }
@@ -123,7 +123,7 @@ export class DebugLogger {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `asteroids-input-${Date.now()}.json`;
+    a.download = `figs-in-space-input-${Date.now()}.json`;
     a.click();
     URL.revokeObjectURL(url);
     console.log('[DEBUG] Input events downloaded');
@@ -135,7 +135,7 @@ export class DebugLogger {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `asteroids-debug-${Date.now()}.json`;
+    a.download = `figs-in-space-debug-${Date.now()}.json`;
     a.click();
     URL.revokeObjectURL(url);
     console.log('[DEBUG] History downloaded');
