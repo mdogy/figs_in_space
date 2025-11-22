@@ -147,14 +147,11 @@ export class TitleScene extends Phaser.Scene {
     this.scene.stop('LeaderboardScene');
 
     // Launch Game in Demo Mode
-    if (this.scene.isActive('GameplayScene')) {
-      this.scene.stop('GameplayScene');
-    }
-    this.scene.launch('GameplayScene', { demo: true });
-    this.scene.wake('GameplayScene');
+    this.scene.run('GameplayScene', { demo: true });
     this.scene.bringToTop('GameplayScene');
     
     // Show Demo UI
+    controlMock.setEnabled(true);
     this.startBlinkingInsertCoin();
     
     // Ensure TitleScene is on top to show "INSERT COIN"

@@ -21,8 +21,9 @@ Starts the Vite server at `http://localhost:5173`.
 
 ### Linting & Testing
 ```bash
-npm run lint   # Run ESLint
-npm test       # Run Vitest
+npm run lint        # Run ESLint
+npm run test:unit   # Run Jest (Unit Tests)
+npm run test:e2e    # Run Playwright (End-to-End)
 ```
 
 ### Production Build

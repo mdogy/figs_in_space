@@ -1,28 +1,28 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { TitleScene } from '../../src/scenes/TitleScene';
 import { GameOverScene } from '../../src/scenes/GameOverScene';
 
 // Mock Phaser
 const mockScene = {
-    start: vi.fn(),
-    stop: vi.fn(),
-    launch: vi.fn(),
-    bringToTop: vi.fn(),
-    isActive: vi.fn(() => false),
-    wake: vi.fn(),
-    get: vi.fn(() => ({
+    start: jest.fn(),
+    stop: jest.fn(),
+    launch: jest.fn(),
+    run: jest.fn(),
+    bringToTop: jest.fn(),
+    isActive: jest.fn(() => false),
+    wake: jest.fn(),
+    get: jest.fn(() => ({
         children: { list: [] },
-        events: { once: vi.fn() }
+        events: { once: jest.fn() }
     })),
 };
 
-vi.mock('../../src/scenes/TitleScene', async () => {
-    const actual = await vi.importActual('../../src/scenes/TitleScene');
+jest.mock('../../src/scenes/TitleScene', () => {
+    const actual = jest.requireActual('../../src/scenes/TitleScene') as any;
     return { ...actual };
 });
 
-vi.mock('../../src/scenes/GameOverScene', async () => {
-    const actual = await vi.importActual('../../src/scenes/GameOverScene');
+jest.mock('../../src/scenes/GameOverScene', () => {
+    const actual = jest.requireActual('../../src/scenes/GameOverScene') as any;
     return { ...actual };
 });
 
@@ -34,31 +34,31 @@ describe('Standby Lifecycle (TitleScene)', () => {
         scene = new TitleScene();
         (scene as any).scene = mockScene;
         (scene as any).add = {
-            text: vi.fn(() => ({
-                setOrigin: vi.fn().mockReturnThis(),
-                setDepth: vi.fn().mockReturnThis(),
-                setVisible: vi.fn().mockReturnThis(),
-                setAlpha: vi.fn().mockReturnThis(),
-                setText: vi.fn().mockReturnThis(),
+            text: jest.fn(() => ({
+                setOrigin: jest.fn().mockReturnThis(),
+                setDepth: jest.fn().mockReturnThis(),
+                setVisible: jest.fn().mockReturnThis(),
+                setAlpha: jest.fn().mockReturnThis(),
+                setText: jest.fn().mockReturnThis(),
             })),
         };
-        (scene as any).tweens = { add: vi.fn() };
+        (scene as any).tweens = { add: jest.fn() };
         (scene as any).input = {
-            keyboard: { on: vi.fn(), off: vi.fn() }
+            keyboard: { on: jest.fn(), off: jest.fn() }
         };
         (scene as any).scale = { width: 800, height: 600 };
-        (scene as any).events = { once: vi.fn() };
+        (scene as any).events = { once: jest.fn() };
         
         // Mock time event to capture callback
         (scene as any).time = {
-            addEvent: vi.fn((config) => {
+            addEvent: jest.fn((config) => {
                 // Only capture the 10s attract-cycle timer, not the blink timer
                 if (config.loop && config.delay === 10000) {
                     timerCallback = config.callback;
                 }
-                return { remove: vi.fn() };
+                return { remove: jest.fn() };
             }),
-            delayedCall: vi.fn()
+            delayedCall: jest.fn()
         };
     });
 
@@ -72,7 +72,7 @@ describe('Standby Lifecycle (TitleScene)', () => {
         
         // Trigger timer (Title -> Demo)
         timerCallback(); 
-        expect(mockScene.launch).toHaveBeenCalledWith('GameplayScene', { demo: true });
+        expect(mockScene.run).toHaveBeenCalledWith('GameplayScene', { demo: true });
         
         // Trigger timer (Demo -> Leaderboard)
         timerCallback();
@@ -92,25 +92,25 @@ describe('Game Over Lifecycle', () => {
         scene = new GameOverScene();
         (scene as any).scene = mockScene;
         (scene as any).add = {
-            text: vi.fn(() => ({
-                setOrigin: vi.fn().mockReturnThis(),
-                setDepth: vi.fn().mockReturnThis(),
-                setVisible: vi.fn().mockReturnThis(),
-                setText: vi.fn().mockReturnThis(),
+            text: jest.fn(() => ({
+                setOrigin: jest.fn().mockReturnThis(),
+                setDepth: jest.fn().mockReturnThis(),
+                setVisible: jest.fn().mockReturnThis(),
+                setText: jest.fn().mockReturnThis(),
             })),
-            graphics: vi.fn(),
+            graphics: jest.fn(),
         };
         (scene as any).scale = { width: 800, height: 600 };
         (scene as any).input = {
-            keyboard: { on: vi.fn(), once: vi.fn(), off: vi.fn() }
+            keyboard: { on: jest.fn(), once: jest.fn(), off: jest.fn() }
         };
         
         (scene as any).time = {
-            delayedCall: vi.fn((delay, callback) => {
+            delayedCall: jest.fn((delay, callback) => {
                 delayedCallback = callback;
-                return { remove: vi.fn() };
+                return { remove: jest.fn() };
             }),
-            removeAllEvents: vi.fn(),
+            removeAllEvents: jest.fn(),
             now: 1000
         };
     });
@@ -132,7 +132,7 @@ describe('Game Over Lifecycle', () => {
         // Simulate high score path
         (scene as any).isHighScore = true;
         (scene as any).time.now = 0;
-        (scene as any).nameInput = { setText: vi.fn() };
+        (scene as any).nameInput = { setText: jest.fn() };
         (scene as any).canInteract = true;
 
         const letters = 'ABCDEFGHIJKLMNOPQRSTU'; // 21 chars

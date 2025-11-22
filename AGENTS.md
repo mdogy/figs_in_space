@@ -12,9 +12,10 @@
 - **State:** Game state (lives, score) is managed in `GameplayScene.ts`.
 
 ## 3. Testing
-- **Runner:** Vitest.
+- **Runners:** Jest (Unit), Playwright (E2E).
 - **Mocks:** Use `tests/mocks/` for Canvas/Phaser mocking.
 - **Coverage:** Aim for high coverage in `src/core/`.
+- **Strategy:** Effect-based testing is mandatory for all bug fixes. Test the visible symptom, not the implementation.
 
 ## 4. Common Tasks
 - **Refactoring:** Run `codebase_investigator` first to understand dependencies.

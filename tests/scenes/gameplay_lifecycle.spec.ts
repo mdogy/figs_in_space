@@ -1,9 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { GameplayScene } from '../../src/scenes/GameplayScene';
 import { ControlMock } from '../../src/core/controlMock';
 import { gameDebug } from '../../src/core/debugLogger';
 
-vi.mock('../../src/prefabs/PlayerShip', () => {
+jest.mock('../../src/prefabs/PlayerShip', () => {
     class PlayerShipStub {
         x = 0;
         y = 0;
@@ -13,53 +12,51 @@ vi.mock('../../src/prefabs/PlayerShip', () => {
         constructor(_scene?: unknown, { size = 48 } = {}) {
             this.size = size;
         }
-        setPosition = vi.fn((x: number, y: number) => {
+        setPosition = jest.fn((x: number, y: number) => {
             this.x = x;
             this.y = y;
             return this;
         });
-        setVisible = vi.fn(() => this);
-        setAlpha = vi.fn(() => this);
-        setName = vi.fn(() => this);
+        setVisible = jest.fn(() => this);
+        setAlpha = jest.fn(() => this);
+        setName = jest.fn(() => this);
     }
     return { PlayerShip: PlayerShipStub };
 });
 
-vi.mock('../../src/prefabs/VectorExplosion', () => {
+jest.mock('../../src/prefabs/VectorExplosion', () => {
     class VectorExplosionStub {
-        setPosition = vi.fn(() => this);
-        destroy = vi.fn();
+        setPosition = jest.fn(() => this);
+        destroy = jest.fn();
     }
     return { VectorExplosion: VectorExplosionStub };
 });
 
 // Mock Phaser
 const mockScene = {
-    start: vi.fn(),
-    stop: vi.fn(),
-    launch: vi.fn(),
-    get: vi.fn(() => ({
+    start: jest.fn(),
+    stop: jest.fn(),
+    launch: jest.fn(),
+    get: jest.fn(() => ({
         children: { list: [] },
-        events: { once: vi.fn() }
+        events: { once: jest.fn() }
     })),
-    isActive: vi.fn(() => false),
+    isActive: jest.fn(() => false),
 };
 
 const mockInput = {
     keyboard: {
-        addCapture: vi.fn(),
-        on: vi.fn(),
-        off: vi.fn(),
+        addCapture: jest.fn(),
+        on: jest.fn(),
+        off: jest.fn(),
     }
 };
 
 // Mock the entire class
-vi.mock('../../src/scenes/GameplayScene', async () => {
-    const actual = await vi.importActual('../../src/scenes/GameplayScene');
+jest.mock('../../src/scenes/GameplayScene', () => {
+    const actual = jest.requireActual('../../src/scenes/GameplayScene') as any;
     return {
         ...actual,
-        // We don't mock the class itself, we want to test it.
-        // But we might need to mock internal Phaser calls if they crash.
     };
 });
 
@@ -74,34 +71,34 @@ describe('GameplayScene Lifecycle', () => {
         // Inject mocks
         (scene as any).scene = mockScene;
         (scene as any).input = mockInput;
-        (scene as any).sys = { queueDepthSort: vi.fn() };
+        (scene as any).sys = { queueDepthSort: jest.fn() };
         (scene as any).add = {
-            existing: vi.fn(),
-            graphics: vi.fn(() => ({
-                lineStyle: vi.fn(),
-                strokeRect: vi.fn(),
-                setDepth: vi.fn().mockReturnThis(),
-                setScrollFactor: vi.fn().mockReturnThis(),
+            existing: jest.fn(),
+            graphics: jest.fn(() => ({
+                lineStyle: jest.fn(),
+                strokeRect: jest.fn(),
+                setDepth: jest.fn().mockReturnThis(),
+                setScrollFactor: jest.fn().mockReturnThis(),
             })),
         };
-        (scene as any).tweens = { add: vi.fn() };
+        (scene as any).tweens = { add: jest.fn() };
         (scene as any).time = {
             now: 0,
-            delayedCall: vi.fn((delay, callback) => {
+            delayedCall: jest.fn((delay, callback) => {
                 delayedCallbacks.push(callback);
-                return { remove: vi.fn() };
+                return { remove: jest.fn() };
             })
         };
         (scene as any).game = {
-            events: { on: vi.fn(), off: vi.fn() },
+            events: { on: jest.fn(), off: jest.fn() },
             config: { width: 800, height: 600 }
         };
         (scene as any).scale = { width: 800, height: 600 };
-        (scene as any).events = { once: vi.fn(), on: vi.fn() };
-        (scene as any).drawReticle = vi.fn();
-        (scene as any).ensureHud = vi.fn();
-        (scene as any).updateHudStats = vi.fn();
-        (scene as any).startLevel = vi.fn();
+        (scene as any).events = { once: jest.fn(), on: jest.fn() };
+        (scene as any).drawReticle = jest.fn();
+        (scene as any).ensureHud = jest.fn();
+        (scene as any).updateHudStats = jest.fn();
+        (scene as any).startLevel = jest.fn();
         
         // Mock Physics/Game Objects if necessary
         // For now, we test logic, not rendering.

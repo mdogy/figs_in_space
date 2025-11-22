@@ -12,6 +12,7 @@
 - [x] Fix continuous shooting input handling
 
 ## Next Steps
+- [x] **MIGRATION:** Switch from Vitest to Jest (Unit) + Playwright (E2E)
 - [x] Validate all test sequences in `ControlMock`
 - [x] Stabilize automated test harness (jsdom env, Phaser spector stub)
 - [ ] Refine game difficulty curves

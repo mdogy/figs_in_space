@@ -87,6 +87,7 @@ Automated attract mode that cycles through three sub-states every 10 seconds. No
   - Black Hole -> Consumes everything.
 - **UI:**
   - Use the yo-yo emoji (🪀) as the site favicon.
+  - INSERT COIN attract overlay must not pause or block demo gameplay running underneath.
 
 ---
 

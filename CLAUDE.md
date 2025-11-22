@@ -12,7 +12,7 @@
 - **State:** Game state (lives, score) is managed in `GameplayScene.ts`.
 
 ## 3. Testing
-- **Runner:** Vitest.
+- **Runners:** Jest (Unit), Playwright (E2E).
 - **Mocks:** Use `tests/mocks/` for Canvas/Phaser mocking.
 - **Coverage:** Aim for high coverage in `src/core/`.
 

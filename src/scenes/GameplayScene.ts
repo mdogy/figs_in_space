@@ -41,7 +41,6 @@ export class GameplayScene extends Phaser.Scene {
   private score = 0;
   private level = 1;
   private scoreMultiplier = 1;
-  private isShooting = false;
   private debugPhase = 0; // 0: No test, 1: Thrust, 2: Rotate, 3: Shoot
   private automationEnabled = false;
   private keyState = {
@@ -239,7 +238,6 @@ export class GameplayScene extends Phaser.Scene {
 
     // Track shooting state to require key release before next shot
     if (!shootPressed) {
-      this.isShooting = false;
       return;
     }
 
@@ -249,7 +247,6 @@ export class GameplayScene extends Phaser.Scene {
     }
 
     // Fire!
-    this.isShooting = true;
     this.lastShotAt = time;
 
     // Calculate muzzle position at the nose of the ship
@@ -378,15 +375,18 @@ export class GameplayScene extends Phaser.Scene {
   }
 
   private checkCollisions(time: number): void {
-    this.lasers.forEach((laser, laserIndex) => {
-      this.figs.forEach((fig, figIndex) => {
+    for (let laserIndex = this.lasers.length - 1; laserIndex >= 0; laserIndex -= 1) {
+      const laser = this.lasers[laserIndex];
+      for (let figIndex = this.figs.length - 1; figIndex >= 0; figIndex -= 1) {
+        const fig = this.figs[figIndex];
         const distance = Phaser.Math.Distance.Between(laser.x, laser.y, fig.x, fig.y);
         if (distance <= fig.radius) {
           this.splitFig(fig, figIndex);
           this.removeLaser(laserIndex);
+          break;
         }
-      });
-    });
+      }
+    }
 
     this.figs.forEach((fig) => {
       const distanceToPlayer = Phaser.Math.Distance.Between(this.player.x, this.player.y, fig.x, fig.y);

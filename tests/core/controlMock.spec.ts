@@ -1,4 +1,3 @@
-import { describe, it, expect, beforeEach } from 'vitest';
 import { ControlMock, MockInputSequence } from '../../src/core/controlMock';
 
 describe('ControlMock', () => {

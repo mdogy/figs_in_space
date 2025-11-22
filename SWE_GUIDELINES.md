@@ -23,7 +23,11 @@
 
 ## 2. Testing Guidelines
 
-### 2.1. Coverage Requirements
+### 2.1. Tools & Frameworks
+- **Unit Testing:** **Jest**. Use for pure logic, math vectors, and isolated component logic.
+- **E2E/Integration:** **Playwright**. Use for full game loops, scene transitions, and visual effect verification.
+
+### 2.2. Coverage Requirements
 - **Unit Tests:** Maintain **80% or higher** code coverage.
 - **Acceptance Tests:** Every requirement listed in `GAME_REQUIREMENTS.md` must be anchored by an automated acceptance test that demonstrates the feature is correctly implemented.
 - **Effect-First Repro:** For every reported bug, add a failing, effect-level test that reproduces the user-visible symptom *before* investigating or applying a fix. If the effect cannot be reproduced with current seams/mocks, first refactor to enable headless detection of the effect, then add the test.

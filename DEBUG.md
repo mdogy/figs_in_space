@@ -122,6 +122,7 @@ gameDebug.downloadHistory();
 ## Environment Notes (WSL/Dropbox)
 
 - Vite cache is redirected to the OS temp directory in `vite.config.ts` to avoid permission errors when running on WSL with a Dropbox-backed filesystem. If you see "Outdated Optimize Dep" or EACCES on `.vite-cache`, clear the temp cache (`rm -rf /tmp/figs-in-space-vite-cache*`) and restart `npm run dev`.
+- If dev server shows a blank screen, ensure the temp cache path is writable and re-run `npm run dev` after clearing the cache directory. Demo mode should keep running under the INSERT COIN overlay; if it appears frozen, verify GameplayScene is active (no sleep/pause applied).
 
 ### Test Laser Firing
 
