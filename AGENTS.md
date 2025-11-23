@@ -2,7 +2,7 @@
 
 ## 1. Core Mandates
 - **Conventions:** Follow existing ESLint and Prettier configs. Match the project's architectural style.
-- **Safety:** Verify code changes with tests (`npm test`). Do not break the build (`npm run build`).
+- **Safety:** Verify code changes with tests (`npm run test:unit`). Do not break the build (`npm run build`).
 - **Context:** Read `GAME_REQUIREMENTS.md` and `SWE_GUIDELINES.md` before starting complex tasks.
 
 ## 2. Codebase Specifics

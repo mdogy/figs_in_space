@@ -6,9 +6,15 @@ A retro vector-shooter built with PhaserJS.
 
 - **[Game Requirements](./GAME_REQUIREMENTS.md):** Detailed breakdown of gameplay mechanics, controls, and progression.
 - **[Engineering Guidelines](./SWE_GUIDELINES.md):** Coding standards, project structure, and architectural patterns.
-- **[Agent Guidelines](./AGENTS.md):** Specific rules for AI agents working on this codebase.
 - **[Debug Tools](./DEBUG.md):** How to use the built-in debug logger and control mock.
 - **[Control Fixes](./CONTROL_FIXES.md):** History of specific control-related bug fixes.
+
+### AI Agent Guidelines
+This project includes specific, up-to-date guidelines for different AI agents. They are kept in sync to reflect the current project status.
+
+- **[GEMINI.md](./GEMINI.md):** For use with the Gemini CLI.
+- **[AGENTS.md](./AGENTS.md):** For use with the Codex CLI (ChatGPT).
+- **[CLAUDE.md](./CLAUDE.md):** For use with Claude.
 
 ## Quick Start
 
