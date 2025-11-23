@@ -12,17 +12,22 @@ A retro vector-shooter built with PhaserJS.
 
 ## Quick Start
 
-### Development
+### Installation
 ```bash
 npm install
+```
+
+### Development
+```bash
 npm run dev
 ```
-Starts the Vite server at `http://localhost:5173`.
+Cleans previous builds and starts the Vite server at `http://localhost:5173`.
 
 ### Linting & Testing
 ```bash
 npm run lint        # Run ESLint
 npm run test:unit   # Run Jest (Unit Tests)
+
 npm run test:e2e    # Run Playwright (End-to-End)
 ```
 
@@ -31,7 +36,13 @@ npm run test:e2e    # Run Playwright (End-to-End)
 npm run build
 npm run preview
 ```
-Builds to `dist/` directory.
+Cleans previous builds and creates a production-ready build in the `dist/` directory. Use `npm run preview` to serve the `dist` folder locally.
+
+### Cleaning
+```bash
+npm run clean
+```
+Removes build artifacts (`dist/`) and compiled JavaScript files from the `src/` and `tests/` directories.
 
 ## Project Structure
 - `src/`: Source code.
@@ -47,52 +58,33 @@ Builds to `dist/` directory.
 
 ## Deployment to GitHub Pages
 
-This project is configured for deployment to GitHub Pages.
+This project is configured for deployment to GitHub Pages using the `gh-pages` package.
 
-### 1. Configuration
-
-The `vite.config.ts` file has been updated with `base: '/figs_in_space/'` to ensure assets are loaded correctly. If your repository has a different name, update this value.
-
-### 2. Build the Project
-
-Run the following command to build the production-ready assets:
+### 1. Build
+Ensure your project is ready for deployment by creating a production build:
 ```bash
 npm run build
 ```
-This will create a `dist` directory with the compiled game.
 
-### 3. Deploy
-
-The easiest way to deploy is using the `gh-pages` package.
-
-**A. Install `gh-pages`**
-If you don't have it installed, add it to your dev dependencies:
-```bash
-npm install gh-pages --save-dev
-```
-
-**B. Add a Deploy Script**
-Add the following script to your `package.json`:
-```json
-"scripts": {
-  // ... other scripts
-  "deploy": "gh-pages -d dist"
-}
-```
-
-**C. Run the Deploy Script**
+### 2. Deploy
+Run the deploy script:
 ```bash
 npm run deploy
 ```
-This command will push the contents of the `dist` folder to a special `gh-pages` branch on your GitHub repository.
+This command pushes the contents of the `dist/` folder to the `gh-pages` branch on your GitHub repository, which will trigger a GitHub Pages deployment.
 
-### 4. Configure GitHub Repository
+### Troubleshooting: SSH Passphrase Prompts
+If you are repeatedly asked for your SSH key passphrase during deployment, it is recommended to use an `ssh-agent` to manage your key.
 
-1. Go to your repository on GitHub.
-2. Click on the **Settings** tab.
-3. In the left sidebar, click on **Pages**.
-4. Under **Build and deployment**, set the **Source** to **Deploy from a branch**.
-5. Set the **Branch** to `gh-pages` and the folder to `/ (root)`.
-6. Click **Save**.
+1.  **Start the agent:**
+    ```bash
+    eval "$(ssh-agent -s)"
+    ```
+2.  **Add your key:** (Replace with your key file if different)
+    ```bash
+    ssh-add ~/.ssh/id_rsa
+    ```
+You will be prompted for your passphrase once, and it will be remembered for the rest of your session.
 
-Your game should be live at `https://<your-username>.github.io/figs_in_space/` within a few minutes.
+### Repository Configuration
+For the deployment to work, ensure your repository's GitHub Pages settings are configured to **"Deploy from a branch"** and the source is set to the `gh-pages` branch with the `/ (root)` folder.
