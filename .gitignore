@@ -1,0 +1,12 @@
+node_modules
+.DS_Store
+dist
+.vscode
+.vite
+.vite-cache
+coverage
+npm-debug.log*
+*.tsbuildinfo
+*.mjs
+vite.config.ts.timestamp-*.mjs
+codex_run_*.log
