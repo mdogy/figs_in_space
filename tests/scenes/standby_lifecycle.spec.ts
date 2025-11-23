@@ -86,9 +86,10 @@ describe('Standby Lifecycle (TitleScene)', () => {
 
 describe('Game Over Lifecycle', () => {
     let scene: GameOverScene;
-    let delayedCallback: Function;
+    let delayedCallbacks: Function[];
 
     beforeEach(() => {
+        delayedCallbacks = [];
         scene = new GameOverScene();
         (scene as any).scene = mockScene;
         (scene as any).add = {
@@ -106,8 +107,8 @@ describe('Game Over Lifecycle', () => {
         };
         
         (scene as any).time = {
-            delayedCall: jest.fn((delay, callback) => {
-                delayedCallback = callback;
+            delayedCall: jest.fn((_delay, callback) => {
+                delayedCallbacks.push(callback);
                 return { remove: jest.fn() };
             }),
             removeAllEvents: jest.fn(),
@@ -123,7 +124,7 @@ describe('Game Over Lifecycle', () => {
         expect((scene as any).canInteract).toBe(false);
         
         // Trigger timeout
-        delayedCallback.call(scene);
+        delayedCallbacks[0]();
         expect((scene as any).canInteract).toBe(true);
     });
 

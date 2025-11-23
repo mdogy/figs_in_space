@@ -1,6 +1,8 @@
 import Phaser from 'phaser';
 import { PlayerShip } from '@prefabs/PlayerShip';
 import { HudOverlay } from '@ui/HudOverlay';
+import { HelpOverlay } from '@ui/HelpOverlay';
+import { QuitDialog } from '@ui/QuitDialog';
 import { angleToVector, limitMagnitude, Vector2, wrapPosition } from '@core/vectorMath';
 import { getVectorColor, VECTOR_LINE_WIDTH } from '@theme/vectorPalette';
 import { GAME_DIMENSIONS } from '../game';
@@ -22,7 +24,6 @@ const GAME_OVER_DELAY_MS = 1000;
 const LASER_BASE_LIFESPAN_MS = 600;
 const LASER_LIFESPAN_STEP_MS = 300;
 const BASE_FIG_COUNT = 5;
-const DEMO_MAX_DURATION_MS = 10000;
 const DEMO_STARTING_SCORE_RANGE = { min: 500, max: 4500 };
 const DEMO_MAX_LEVEL = 12;
 const DEMO_MIN_LIVES = 3;
@@ -31,6 +32,8 @@ const DEMO_MAX_LIVES = 10;
 export class GameplayScene extends Phaser.Scene {
   private player!: PlayerShip;
   private hud?: HudOverlay;
+  private helpOverlay?: HelpOverlay;
+  private quitDialog?: QuitDialog;
   private lasers: LaserBolt[] = [];
   private figs: Fig[] = [];
   private saucers: EnemySaucer[] = [];
@@ -41,7 +44,6 @@ export class GameplayScene extends Phaser.Scene {
   private score = 0;
   private level = 1;
   private scoreMultiplier = 1;
-  private debugPhase = 0; // 0: No test, 1: Thrust, 2: Rotate, 3: Shoot
   private automationEnabled = false;
   private keyState = {
     left: false,
@@ -56,7 +58,11 @@ export class GameplayScene extends Phaser.Scene {
   private invulnerableUntil = 0;
   private isDemoMode = false;
   private isPlayerAlive = true;
-  private demoStartedAt = 0;
+  private isPaused = false;
+  private isHelpVisible = false;
+  private isQuitDialogVisible = false;
+  private helpDismissTimer?: Phaser.Time.TimerEvent;
+  private isShooting = false;
 
   constructor() {
     super('GameplayScene');
@@ -75,8 +81,10 @@ export class GameplayScene extends Phaser.Scene {
     this.saucerLasers = [];
     this.blackHoles = [];
     this.lastShotAt = 0;
-    this.demoStartedAt = this.time.now;
     this.keyState = { left: false, right: false, up: false, down: false, space: false };
+    this.isPaused = false;
+    this.isHelpVisible = false;
+    this.isQuitDialogVisible = false;
 
     this.score = 0;
     this.level = 1;
@@ -87,7 +95,6 @@ export class GameplayScene extends Phaser.Scene {
       this.lives = Phaser.Math.Between(DEMO_MIN_LIVES, DEMO_MAX_LIVES);
     }
     this.scoreMultiplier = 1;
-    this.debugPhase = 0; // Reset automation phase each run
 
     const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : new URLSearchParams();
     this.automationEnabled = ['1', 'true', 'yes'].includes((params.get('autoTest') ?? '').toLowerCase());
@@ -105,11 +112,24 @@ export class GameplayScene extends Phaser.Scene {
     this.startLevel(this.level);
     this.updateHudStats();
 
+    // Initialize UI overlays (hidden by default)
+    this.helpOverlay = new HelpOverlay(this, GAME_DIMENSIONS.width, GAME_DIMENSIONS.height);
+    this.add.existing(this.helpOverlay);
+    this.helpOverlay.setVisible(false);
+
+    this.quitDialog = new QuitDialog(this, GAME_DIMENSIONS.width, GAME_DIMENSIONS.height);
+    this.add.existing(this.quitDialog);
+    this.quitDialog.setVisible(false);
+
+    // Show Help at start if not demo
+    if (!this.isDemoMode && !this.automationEnabled) {
+      this.showHelp();
+    }
+
     // Automated testing setup (opt-in via ?autoTest=true)
     if (this.automationEnabled) {
       gameDebug.setEnabled(true);
       controlMock.setEnabled(true);
-      this.debugPhase = 1; // Start with thrust test
       controlMock.setSequence(ControlMock.getTestSequence('user-thrust-test'));
       console.log('[DEBUG] Starting user-thrust-test');
     } else if (this.isDemoMode) {
@@ -119,16 +139,15 @@ export class GameplayScene extends Phaser.Scene {
     } else {
       gameDebug.setEnabled(debugRequested);
       controlMock.setEnabled(false);
-      this.debugPhase = 0;
     }
   }
 
   update(time: number, delta: number): void {
+    if (this.isPaused) {
+      return;
+    }
+
     if (this.isDemoMode) {
-      if (time - this.demoStartedAt > DEMO_MAX_DURATION_MS) {
-        this.endGame();
-        return;
-      }
       this.updateDemoAI();
     }
 
@@ -150,28 +169,142 @@ export class GameplayScene extends Phaser.Scene {
     this.updateSaucers(time, delta);
     this.updateFigs(delta);
     this.checkCollisions(time);
-    this.logDebugState(time);
-
-    // Automated testing phase management
-    if (this.automationEnabled && this.debugPhase > 0) {
-      if (time >= 15000 && this.debugPhase === 1) { // 15 seconds for thrust test
-        this.debugPhase = 2; // Switch to rotate test
-        controlMock.reset();
-        controlMock.setSequence(ControlMock.getTestSequence('user-rotate-test'));
-        console.log('[DEBUG] Starting user-rotate-test');
-      } else if (time >= 30000 && this.debugPhase === 2) { // 15 seconds for rotate test (15s + 15s)
-        this.debugPhase = 3; // Switch to shoot test
-        controlMock.reset();
-        controlMock.setSequence(ControlMock.getTestSequence('user-shoot-test'));
-        console.log('[DEBUG] Starting user-shoot-test');
-      } else if (time >= 45000 && this.debugPhase === 3) { // 15 seconds for shoot test (30s + 15s)
-        this.debugPhase = 0; // End tests
-        controlMock.setEnabled(false);
-        gameDebug.setEnabled(false);
-        console.log('[DEBUG] All automated tests finished.');
-        gameDebug.downloadHistory(); // Download the log history
-      }
+    
+    // Force HUD update periodically (every 60 frames approx) to catch desyncs
+    if (this.game.loop.frame % 60 === 0) {
+        this.updateHudStats();
     }
+
+    this.logDebugState(time);
+  }
+
+  private showHelp(duration?: number): void {
+    this.isPaused = true;
+    this.isHelpVisible = true;
+    this.helpOverlay?.setVisible(true);
+    this.quitDialog?.setVisible(false); // Ensure quit is hidden
+    
+    if (duration) {
+      this.helpDismissTimer?.remove();
+      this.helpDismissTimer = this.time.delayedCall(duration, () => {
+        this.hideHelp();
+      });
+    }
+  }
+
+  private hideHelp(): void {
+    this.isPaused = false;
+    this.isHelpVisible = false;
+    this.helpOverlay?.setVisible(false);
+    this.helpDismissTimer?.remove();
+    // Reset key state to avoid stuck keys
+    this.resetKeyState('resume');
+  }
+
+  private showQuitDialog(): void {
+    this.isPaused = true;
+    this.isQuitDialogVisible = true;
+    this.quitDialog?.setVisible(true);
+    this.helpOverlay?.setVisible(false);
+  }
+
+  private hideQuitDialog(): void {
+    this.isPaused = false;
+    this.isQuitDialogVisible = false;
+    this.quitDialog?.setVisible(false);
+    this.resetKeyState('resume');
+  }
+
+  private handleGlobalInput(event: KeyboardEvent): void {
+    const code = event.code || event.key;
+    
+    if (this.isHelpVisible) {
+        // Any key dismisses help (unless timer is active? Req says "After 2 seconds game should resume" for unbound. 
+        // But "Before game starts... listed". User might want to dismiss start screen manually.
+        // Let's allow manual dismiss if NO timer is active, or just allow it always?
+        // "After 2 seconds game should resume" implies automatic.
+        // Let's allow manual dismiss for the Start Screen case (no timer).
+        if (!this.helpDismissTimer || this.helpDismissTimer.hasDispatched) {
+             this.hideHelp();
+        }
+        return;
+    }
+
+    if (this.isQuitDialogVisible) {
+        if (code === 'KeyQ' || code === 'q' || code === 'Q') {
+            // Confirm Quit
+            this.scene.start('TitleScene');
+            this.scene.stop('GameplayScene');
+            this.scene.stop('HudScene');
+        } else {
+            // Cancel
+            this.hideQuitDialog();
+        }
+        return;
+    }
+
+    if (this.isPaused) return; // Don't process other inputs if paused (and not in a dialog handled above)
+
+    // Game Playing Input Checks
+    if (code === 'KeyQ' || code === 'q' || code === 'Q') {
+        this.showQuitDialog();
+        return;
+    }
+
+    // Unbound Key Check
+    // Bound keys: Arrows, Space
+    const boundCodes = [
+        'ArrowUp', 'Up', 
+        'ArrowDown', 'Down', 
+        'ArrowLeft', 'Left', 
+        'ArrowRight', 'Right', 
+        'Space', 'Spacebar', ' '
+    ];
+
+    if (!boundCodes.includes(code) && !this.isDemoMode && !this.isGameOver && this.isPlayerAlive) {
+        // Unbound key pressed
+        this.showHelp(2000);
+    }
+  }
+
+  private handlePlayerHit(time: number): void {
+    if (this.isGameOver) return;
+    if (time < this.invulnerableUntil) return;
+    if (!this.isPlayerAlive) return;
+
+    console.log(`[GAMEPLAY] handlePlayerHit triggered at ${time}. Current Lives: ${this.lives}`);
+
+    new VectorExplosion(this, { radius: 36 }).setPosition(this.player.x, this.player.y);
+
+    this.lives = Math.max(0, this.lives - 1);
+    console.log(`[GAMEPLAY] Lives decremented to: ${this.lives}`);
+    
+    // Immediate HUD update attempt
+    if (this.hud) {
+        this.hud.setLives(this.lives);
+    } else {
+        console.warn('[GAMEPLAY] HUD not connected during player hit!');
+    }
+    
+    this.resetKeyState('death');
+    this.playerVelocity = { x: 0, y: 0 };
+    this.player.setVisible(false);
+    this.isPlayerAlive = false;
+    const respawnTime = time + RESPAWN_DELAY_MS;
+    // Invulnerable for 2s after respawn delay (Total = RESPAWN + 2000ms)
+    this.invulnerableUntil = respawnTime + INVULNERABLE_MS;
+
+    if (this.lives <= 0) {
+      console.log('[GAMEPLAY] Game Over triggered (Lives <= 0)');
+      this.isGameOver = true;
+      this.time.delayedCall(GAME_OVER_DELAY_MS, () => this.endGame());
+      return;
+    }
+
+    console.log('[GAMEPLAY] Respawn scheduled');
+    this.time.delayedCall(RESPAWN_DELAY_MS, () => {
+      this.respawnPlayer(respawnTime);
+    });
   }
 
   private handleInput(delta: number): void {
@@ -236,8 +369,13 @@ export class GameplayScene extends Phaser.Scene {
     const mockInput = controlMock.isEnabled() ? controlMock.getCurrentInput() : null;
     const shootPressed = (mockInput?.space ?? false) || this.keyState.space;
 
-    // Track shooting state to require key release before next shot
+    // Require key release between shots
     if (!shootPressed) {
+      this.isShooting = false;
+      return;
+    }
+
+    if (this.isShooting) {
       return;
     }
 
@@ -248,6 +386,7 @@ export class GameplayScene extends Phaser.Scene {
 
     // Fire!
     this.lastShotAt = time;
+    this.isShooting = true;
 
     // Calculate muzzle position at the nose of the ship
     // Ship is drawn pointing RIGHT (positive X) at rotation = 0
@@ -379,8 +518,13 @@ export class GameplayScene extends Phaser.Scene {
       const laser = this.lasers[laserIndex];
       for (let figIndex = this.figs.length - 1; figIndex >= 0; figIndex -= 1) {
         const fig = this.figs[figIndex];
+        
+        // Simple distance check with generous buffer for laser length
         const distance = Phaser.Math.Distance.Between(laser.x, laser.y, fig.x, fig.y);
-        if (distance <= fig.radius) {
+        const collisionThreshold = fig.radius + 16; // Radius + approx laser length/2 + slop
+
+        if (distance <= collisionThreshold) {
+          console.log(`[GAMEPLAY] Hit! Laser at ${Math.round(laser.x)},${Math.round(laser.y)} vs Fig at ${Math.round(fig.x)},${Math.round(fig.y)} Dist:${Math.round(distance)}`);
           this.splitFig(fig, figIndex);
           this.removeLaser(laserIndex);
           break;
@@ -406,35 +550,7 @@ export class GameplayScene extends Phaser.Scene {
     }
   }
 
-  private handlePlayerHit(time: number): void {
-    if (this.isGameOver) return;
-    if (time < this.invulnerableUntil) return;
-    if (!this.isPlayerAlive) return;
 
-    new VectorExplosion(this, { radius: 36 }).setPosition(this.player.x, this.player.y);
-
-    this.lives = Math.max(0, this.lives - 1);
-    console.log(`[GAMEPLAY] Player hit! Lives remaining: ${this.lives}`);
-    this.hud?.setLives(this.lives);
-    
-    this.resetKeyState('death');
-    this.playerVelocity = { x: 0, y: 0 };
-    this.player.setVisible(false);
-    this.isPlayerAlive = false;
-    const respawnTime = time + RESPAWN_DELAY_MS;
-    // Invulnerable for 2s after respawn delay (Total = RESPAWN + 2000ms)
-    this.invulnerableUntil = respawnTime + INVULNERABLE_MS;
-
-    if (this.lives <= 0) {
-      this.isGameOver = true;
-      this.time.delayedCall(GAME_OVER_DELAY_MS, () => this.endGame());
-      return;
-    }
-
-    this.time.delayedCall(RESPAWN_DELAY_MS, () => {
-      this.respawnPlayer(respawnTime);
-    });
-  }
 
   private respawnPlayer(respawnAt: number): void {
     this.player.setPosition(GAME_DIMENSIONS.width / 2, GAME_DIMENSIONS.height / 2);
@@ -615,19 +731,14 @@ export class GameplayScene extends Phaser.Scene {
     this.spawnFigs(figCount, {}, speedMultiplier);
     this.hud?.setLevel(this.level);
     this.spawnBlackHoleIfNeeded();
-    this.scheduleSaucersForLevel();
+    this.spawnSaucersForLevel();
   }
 
-  private scheduleSaucersForLevel(): void {
+  private spawnSaucersForLevel(): void {
     if (this.level < 3) return;
     const count = 1 + Math.floor((this.level - 3) / 2);
     for (let i = 0; i < count; i += 1) {
-      const delay = Phaser.Math.Between(2000, 6000) + i * 1500;
-      this.time.delayedCall(delay, () => {
-        if (!this.isGameOver) {
-          this.spawnSaucer();
-        }
-      });
+       this.spawnSaucer();
     }
   }
 
@@ -647,10 +758,10 @@ export class GameplayScene extends Phaser.Scene {
       if (laser) {
         this.saucerLasers.push(laser);
       }
-      if (saucer.isOffscreen(GAME_DIMENSIONS.width, GAME_DIMENSIONS.height)) {
-        saucer.destroy();
-        this.saucers.splice(i, 1);
-      }
+      
+      // Wrap saucers so they persist until killed
+      saucer.x = wrapPosition(saucer.x, GAME_DIMENSIONS.width);
+      saucer.y = wrapPosition(saucer.y, GAME_DIMENSIONS.height);
     }
 
     // Player lasers vs saucers
@@ -807,7 +918,10 @@ export class GameplayScene extends Phaser.Scene {
       }
     };
 
-    const onKeyDown = (event: KeyboardEvent) => setState(event, true);
+    const onKeyDown = (event: KeyboardEvent) => {
+        this.handleGlobalInput(event);
+        setState(event, true);
+    };
     const onKeyUp = (event: KeyboardEvent) => setState(event, false);
 
     keyboard.on('keydown', onKeyDown);
@@ -860,6 +974,14 @@ export class GameplayScene extends Phaser.Scene {
   }
 
   private updateHudStats(): void {
+    // If hud is missing or inactive, try to find it again
+    if (!this.hud || !this.hud.active) {
+       const hudScene = this.scene.get('HudScene');
+       if (hudScene && hudScene.scene.isActive()) {
+           this.hud = hudScene.children.list.find((child) => child.name === 'HudOverlay') as HudOverlay | undefined;
+       }
+    }
+    
     if (!this.hud) return;
     this.hud.setScore(this.score);
     this.hud.setLives(this.lives);

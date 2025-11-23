@@ -61,6 +61,14 @@ controlMock.reset();
 controlMock.setEnabled(false);
 ```
 
+### Automated Testing Mode
+
+You can launch the game in automated testing mode via URL parameters:
+
+- `?autoTest=true`: Runs a sequence of Thrust, Rotate, and Shoot tests automatically.
+- `?debug=true`: Enables debug logging without running the auto-test sequence.
+- `?inputLog=true`: Logs detailed input events to the console.
+
 ### Available Test Sequences
 
 - `rotate-test`: Tests left/right rotation including simultaneous key presses

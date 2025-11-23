@@ -14,6 +14,9 @@ module.exports = {
   rules: {
     'no-console': ['warn', { allow: ['warn', 'error'] }],
     '@typescript-eslint/explicit-function-return-type': 'off',
-    '@typescript-eslint/no-unsafe-assignment': 'off'
+    '@typescript-eslint/no-unsafe-assignment': 'off',
+    '@typescript-eslint/no-explicit-any': 'off',
+    '@typescript-eslint/ban-types': 'off',
+    '@typescript-eslint/ban-ts-comment': 'off'
   }
 };

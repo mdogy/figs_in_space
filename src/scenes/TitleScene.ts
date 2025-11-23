@@ -183,6 +183,7 @@ export class TitleScene extends Phaser.Scene {
     controlMock.setEnabled(false);
     this.scene.stop('LeaderboardScene');
     this.scene.stop('GameplayScene');
+    this.scene.stop('HudScene');
     this.scene.start('GameplayScene', { demo: false });
     this.scene.launch('HudScene');
     this.scene.stop('TitleScene');

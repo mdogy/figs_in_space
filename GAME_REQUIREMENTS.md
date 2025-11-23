@@ -5,7 +5,7 @@ The game operates in two main states: **Gameplay** and **Standby**.
 
 ### A. Gameplay State
 - The active state where the user plays the game.
-- **Start:** Triggered by any key press during the Standby state.
+- **Start:** Triggered by any key press during the Standby state. **Displays a Help Screen first.**
 - **End:** The game ends when the player's lives drop to 0.
   - Initial lives: 10.
   - **Game Over Sequence:**
@@ -16,6 +16,7 @@ The game operates in two main states: **Gameplay** and **Standby**.
        - Wait for name input or Enter key.
        - If Enter pressed with no name, a random name is assigned.
     4. Transition back to **Standby State**.
+- **Quit:** Pressing 'q' pauses the game and asks "Are you sure you want to quit?". Confirming ends the game.
 
 ### B. Standby State
 Automated attract mode that cycles through three sub-states every 10 seconds. No user intervention required.
@@ -49,9 +50,11 @@ Automated attract mode that cycles through three sub-states every 10 seconds. No
   - Each level increases the number of starting large figs until Level 9; after Level 9 fig count stays flat.
   - Fig speed increases by 5% per level (up to Level 9); after Level 9 speed stays flat.
   - Level ends when all figs are destroyed.
-- **Enemies:**
-  - **Level 3:** First Alien Ship appears (flies by and fires).
+- **Enemies (Alien Ships):**
+  - **Level 3:** First Alien Ship appears.
   - **Frequency:** Another Alien Ship added every 2 levels thereafter.
+  - **Spawning:** Aliens only appear at the **beginning** of the level.
+  - **Persistence:** Aliens persist until destroyed. They do **not** respawn during the level. If multiple aliens are spawned, they coexist on screen until killed.
 - **Hazards:**
   - **Level 9:** Black Hole appears.
     - Sucks in anything (Player, Aliens, Figs).
@@ -70,6 +73,9 @@ Automated attract mode that cycles through three sub-states every 10 seconds. No
 | **Rotate Right** | Right Arrow | Rotate ship clockwise. |
 | **Stop Rotation** | Opposite Arrow | Short press opposite to spin stops rotation. |
 | **Fire** | Spacebar | Fire laser bolts (continuous while held). |
+| **Quit** | Q | Quit the game (with confirmation). |
+
+**Unbound Keys:** Pressing any unbound key pauses the game and displays the Help Screen for 2 seconds before resuming.
 
 ---
 

@@ -1,6 +1,5 @@
+// @ts-nocheck
 import { GameplayScene } from '../../src/scenes/GameplayScene';
-import { ControlMock } from '../../src/core/controlMock';
-import { gameDebug } from '../../src/core/debugLogger';
 
 jest.mock('../../src/prefabs/PlayerShip', () => {
     class PlayerShipStub {

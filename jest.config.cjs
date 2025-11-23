@@ -10,7 +10,8 @@ module.exports = {
     '^@prefabs/(.*)$': '<rootDir>/src/prefabs/$1',
     '^@theme/(.*)$': '<rootDir>/src/theme/$1',
     '^@ui/(.*)$': '<rootDir>/src/ui/$1',
-    '^phaser3spectorjs$': '<rootDir>/tests/mocks/phaser3spectorjs.ts'
+    '^phaser3spectorjs$': '<rootDir>/tests/mocks/phaser3spectorjs.ts',
+    '^phaser$': '<rootDir>/tests/mocks/phaserModule.ts'
   },
   setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
   transform: {

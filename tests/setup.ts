@@ -1,5 +1,5 @@
 import { mockCanvas } from './mocks/canvas';
-import { mockPhaser } from './mocks/phaser';
+import PhaserMock from './mocks/phaserModule';
 
+(global as any).Phaser = PhaserMock;
 mockCanvas();
-mockPhaser();

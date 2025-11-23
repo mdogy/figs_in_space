@@ -16,18 +16,15 @@ export class LeaderboardScene extends Phaser.Scene {
   create(): void {
     const { width, height } = this.scale;
 
-    this.add
-      .text(width / 2, height / 2 - 250, 'HIGH SCORES', {
-        fontFamily: 'Orbitron, monospace',
-        fontSize: '48px',
-        color: getVectorColor('primary'),
-        stroke: '#000',
-        strokeThickness: 6
-      })
-      .setOrigin(0.5);
-
     const scores = leaderboardManager.getScores().filter(score => score.score > 0);
-    let yPos = height / 2 - 150;
+    this.add.text(width / 2, height * 0.15, 'HIGH SCORES', {
+      fontSize: '64px',
+      color: getVectorColor('primary'),
+      fontStyle: 'bold'
+    }).setOrigin(0.5);
+
+    const startY = height * 0.3;
+    const yPos = startY;
 
     scores.forEach((scoreEntry, index) => {
       this.add

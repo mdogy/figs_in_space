@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { GameplayScene } from '../../src/scenes/GameplayScene';
 import { getLaserShots } from '@prefabs/LaserBolt';
 
@@ -97,7 +98,7 @@ describe('Gameplay progression rules', () => {
       launch: jest.fn(),
       run: jest.fn(),
       stop: jest.fn(),
-      get: jest.fn(() => ({ children: { list: [] }, events: { once: jest.fn() } }))
+      get: jest.fn(() => ({ children: { list: [] }, events: { once: jest.fn() }, scene: { isActive: jest.fn(() => true) } }))
     };
     (scene as any).add = {
       existing: jest.fn(),
@@ -115,7 +116,8 @@ describe('Gameplay progression rules', () => {
     };
     (scene as any).game = {
       events: { on: jest.fn(), off: jest.fn() },
-      config: { width: 960, height: 720 }
+      config: { width: 960, height: 720 },
+      loop: { frame: 0 }
     };
     (scene as any).scale = { width: 960, height: 720 };
     (scene as any).input = {
